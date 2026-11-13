@@ -67,6 +67,7 @@ import {
 
 type NavSection =
   | 'dashboard'
+  | 'pos'
   | 'closing'
   | 'invoice'
   | 'piutang'
@@ -125,7 +126,6 @@ export default function App() {
 
   // Navigation & Modal States
   const [activeNav, setActiveNav] = useState<NavSection>('dashboard');
-  const [isPosModalOpen, setIsPosModalOpen] = useState<boolean>(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
   const [selectedInvoiceNo, setSelectedInvoiceNo] = useState<string>('');
 
@@ -242,7 +242,6 @@ export default function App() {
             );
           }
           setPendingMutation(null);
-          setIsPosModalOpen(false);
           setSelectedInvoiceNo(invoiceNo);
           setStatusBanner(
             `Penjualan ${invoiceNo} berhasil disimpan ke tab Tracker Closing di Google Spreadsheet! Silakan unduh PDF Invoice.`
@@ -556,6 +555,7 @@ export default function App() {
       groupLabel: 'MENU PENJUALAN & INVOICE',
       items: [
         { id: 'dashboard', label: 'Dasbor Penjualan', icon: LayoutDashboard },
+        { id: 'pos', label: 'Input Penjualan', icon: Plus },
         {
           id: 'closing',
           label: 'Tracker Closing (Penjualan)',
@@ -801,11 +801,11 @@ export default function App() {
 
             <button
               type="button"
-              onClick={() => setIsPosModalOpen(true)}
+              onClick={() => setActiveNav('pos')}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-extrabold text-white bg-[#114232] hover:bg-[#0c3124] rounded-full shadow-xs transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>+ Input Penjualan</span>
+              <span>Input Penjualan</span>
             </button>
           </div>
         </header>
@@ -904,7 +904,7 @@ export default function App() {
               {activeNav === 'dashboard' && (
                 <OperationalDashboard
                   orders={bundle.closingOrders}
-                  onOpenPosModal={() => setIsPosModalOpen(true)}
+                  onOpenPosModal={() => setActiveNav('pos')}
                   onNavigate={(v) => setActiveNav(v as NavSection)}
                   onSelectInvoice={(inv) => setSelectedInvoiceNo(inv)}
                   onUpdateStatus={handleQuickUpdateStatus}
@@ -912,7 +912,19 @@ export default function App() {
                 />
               )}
 
-              {/* 2. PENJUALAN (Tracker Closing) */}
+              {/* 2. INPUT PENJUALAN (FULL PAGE POS INLINE) */}
+              {activeNav === 'pos' && (
+                <PosOrderModal
+                  isOpen={true}
+                  isInline={true}
+                  existingOrders={bundle.closingOrders}
+                  nextInsertRow1Based={bundle.closingSheet.nextInsertRow1Based}
+                  onClose={() => setActiveNav('closing')}
+                  onSaveRowsToTrackerClosing={handleSavePosRowsToTrackerClosing}
+                />
+              )}
+
+              {/* 3. PENJUALAN (Tracker Closing) */}
               {activeNav === 'closing' && (
                 <TrackerClosingView
                   key="closing"
@@ -922,7 +934,7 @@ export default function App() {
                   allOrders={bundle.closingOrders}
                   defaultPaymentFilter="all"
                   globalSearch={globalSearch}
-                  onOpenPosModal={() => setIsPosModalOpen(true)}
+                  onOpenPosModal={() => setActiveNav('pos')}
                   onSavePosRowsToTrackerClosing={handleSavePosRowsToTrackerClosing}
                   onOpenInvoice={(inv) => {
                     setSelectedInvoiceNo(inv);
@@ -952,7 +964,7 @@ export default function App() {
                 />
               )}
 
-              {/* 3. BUAT & UNDUH PDF INVOICE */}
+              {/* 4. BUAT & UNDUH PDF INVOICE */}
               {activeNav === 'invoice' && (
                 <InvoiceStudio
                   orders={bundle.closingOrders}
@@ -962,7 +974,7 @@ export default function App() {
                 />
               )}
 
-              {/* 4. BELUM LUNAS / DP */}
+              {/* 5. BELUM LUNAS / DP */}
               {activeNav === 'piutang' && (
                 <TrackerClosingView
                   key="piutang"
@@ -972,7 +984,7 @@ export default function App() {
                   allOrders={bundle.closingOrders}
                   defaultPaymentFilter="unpaid"
                   globalSearch={globalSearch}
-                  onOpenPosModal={() => setIsPosModalOpen(true)}
+                  onOpenPosModal={() => setActiveNav('pos')}
                   onSavePosRowsToTrackerClosing={handleSavePosRowsToTrackerClosing}
                   onOpenInvoice={(inv) => {
                     setSelectedInvoiceNo(inv);
@@ -1002,7 +1014,7 @@ export default function App() {
                 />
               )}
 
-              {/* 5. PENGINGAT & FOLLOW UP WHATSAPP */}
+              {/* 6. PENGINGAT & FOLLOW UP WHATSAPP */}
               {activeNav === 'reminders' && (
                 <CustomerRemindersView
                   orders={bundle.closingOrders}
@@ -1026,10 +1038,10 @@ export default function App() {
                 />
               )}
 
-              {/* 6. KALKULATOR HARGA */}
+              {/* 7. KALKULATOR HARGA */}
               {activeNav === 'calculator' && (
                 <PricingCalculatorView
-                  onOpenPosWithPreset={() => setIsPosModalOpen(true)}
+                  onOpenPosWithPreset={() => setActiveNav('pos')}
                 />
               )}
 
@@ -1342,17 +1354,6 @@ export default function App() {
           </div>
         </main>
       </div>
-
-      {/* Full POS & Input Penjualan Modal */}
-      {bundle && (
-        <PosOrderModal
-          isOpen={isPosModalOpen}
-          existingOrders={bundle.closingOrders}
-          nextInsertRow1Based={bundle.closingSheet.nextInsertRow1Based}
-          onClose={() => setIsPosModalOpen(false)}
-          onSaveRowsToTrackerClosing={handleSavePosRowsToTrackerClosing}
-        />
-      )}
 
       {/* Row Editor Modal */}
       {editingRow && (

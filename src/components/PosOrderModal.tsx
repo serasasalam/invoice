@@ -7,6 +7,7 @@ import { generateNextInvoiceCode } from '../services/sheetsApi';
 import { formatRupiah } from './BookkeepingSummary';
 import { buildInvoicePdfFilename } from './InvoiceStudio';
 import {
+  ArrowLeft,
   Calendar,
   CheckCircle2,
   ChevronDown,
@@ -332,41 +333,60 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
 
   const content = (
     <div
-      className={`bg-white border border-slate-200/90 rounded-3xl shadow-2xl overflow-hidden ${
+      className={
         isInline
-          ? 'w-full'
-          : 'w-full max-w-[1140px] max-h-[90vh] flex flex-col'
-      }`}
+          ? 'w-full space-y-5'
+          : 'bg-white border border-slate-200/90 rounded-3xl shadow-2xl overflow-hidden w-full max-w-[1140px] max-h-[90vh] flex flex-col'
+      }
     >
-      {/* Sticky Modal Header Bar (Never wraps awkwardly) */}
-      <div className="shrink-0 flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-200 bg-white">
+      {/* Header Bar */}
+      <div
+        className={
+          isInline
+            ? 'flex flex-col sm:flex-row sm:items-center justify-between gap-4'
+            : 'shrink-0 flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-200 bg-white'
+        }
+      >
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-[#114232] text-white flex items-center justify-center shrink-0">
-            <FileSpreadsheet className="w-4 h-4" />
-          </div>
+          {!isInline && (
+            <div className="w-9 h-9 rounded-xl bg-[#114232] text-white flex items-center justify-center shrink-0">
+              <FileSpreadsheet className="w-4 h-4" />
+            </div>
+          )}
           <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
-                Input Penjualan & Buat Invoice Baru
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                Input Penjualan &amp; Buat Invoice Baru
               </h2>
-              <span className="px-2.5 py-0.5 text-[11px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full">
+              <span className="px-2.5 py-0.5 text-[11px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md">
                 Tracker Closing · Baris #{nextInsertRow1Based}
               </span>
             </div>
-            <p className="text-xs text-slate-500 truncate mt-0.5">
-              Otomatis tersimpan ke Google Sheet & siap diunduh sebagai PDF Invoice
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+              Otomatis tersimpan ke Google Sheet &amp; siap diunduh sebagai PDF Invoice
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+          {isInline && onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Lihat Tracker Closing</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handleResetForm}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-rose-700 bg-slate-100 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-rose-700 bg-white hover:bg-rose-50 border border-slate-200 rounded-xl transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Reset</span>
+            <span>Reset Form</span>
           </button>
 
           {!isInline && onClose && (
@@ -382,14 +402,16 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
         </div>
       </div>
 
-      {/* Main Form Body: Independent Scroll Area */}
+      {/* Main Form Body: Full Page Natural Scroll When Inline */}
       <form
         onSubmit={handleSaveOrder}
-        className="flex-1 overflow-y-auto p-5 sm:p-6 bg-[#F4F7F5]"
+        className={
+          isInline ? 'space-y-6' : 'flex-1 overflow-y-auto p-5 sm:p-6 bg-[#F4F7F5]'
+        }
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* LEFT 7 COLS: Step 1 (Pemesan), Step 2 (Item Order), Step 3 (Catatan) */}
-          <div className="lg:col-span-7 space-y-5">
+          {/* LEFT 8 COLS: Step 1 (Pemesan), Step 2 (Item Order), Step 3 (Catatan) */}
+          <div className="lg:col-span-8 space-y-5">
             {/* STEP 1: DATA PEMESAN & TANGGAL */}
             <div className="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-4 shadow-2xs">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -678,9 +700,9 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                       </div>
 
                       {/* Nama Order + Harga + Qty + Jumlah Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                      <div className="grid grid-cols-2 sm:grid-cols-12 gap-3 items-end">
                         {/* Nama Order (Editable text so custom names work too) */}
-                        <div className="sm:col-span-5">
+                        <div className="col-span-2 sm:col-span-4">
                           <label className="block text-[11px] font-bold text-slate-600 mb-1">
                             Nama Order (Di Invoice)
                           </label>
@@ -691,12 +713,12 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                               handleUpdateItem(it.id, { paket: e.target.value })
                             }
                             placeholder="Ketik nama paket / produk..."
-                            className="w-full px-3 py-2.5 text-xs font-bold bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#114232]"
+                            className="w-full px-3 py-2.5 text-xs sm:text-sm font-bold bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#114232]"
                           />
                         </div>
 
                         {/* Harga / pcs */}
-                        <div className="sm:col-span-3">
+                        <div className="col-span-1 sm:col-span-3">
                           <label className="block text-[11px] font-bold text-slate-600 mb-1">
                             Harga Satuan (Rp)
                           </label>
@@ -709,12 +731,12 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                                 hargaPcs: Math.max(0, Number(e.target.value) || 0),
                               })
                             }
-                            className="w-full px-3 py-2.5 text-xs font-mono font-bold bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#114232] tabular-nums"
+                            className="w-full px-3 py-2.5 text-xs sm:text-sm font-mono font-bold bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#114232] tabular-nums"
                           />
                         </div>
 
                         {/* Qty (pcs) */}
-                        <div className="sm:col-span-2">
+                        <div className="col-span-1 sm:col-span-2">
                           <label className="block text-[11px] font-bold text-slate-600 mb-1">
                             Qty (pcs)
                           </label>
@@ -727,16 +749,16 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                                 qty: Math.max(1, Number(e.target.value) || 1),
                               })
                             }
-                            className="w-full px-3 py-2.5 text-xs font-mono font-bold text-center bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#114232] tabular-nums"
+                            className="w-full px-3 py-2.5 text-xs sm:text-sm font-mono font-bold text-center bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#114232] tabular-nums"
                           />
                         </div>
 
                         {/* Jumlah Subtotal */}
-                        <div className="sm:col-span-2">
+                        <div className="col-span-2 sm:col-span-3">
                           <label className="block text-[11px] font-bold text-slate-600 mb-1 sm:text-right">
                             Jumlah
                           </label>
-                          <div className="px-2.5 py-2.5 text-xs font-mono font-extrabold text-slate-900 bg-emerald-50/70 border border-emerald-200/80 rounded-xl sm:text-right tabular-nums truncate">
+                          <div className="px-3 py-2.5 text-xs sm:text-sm font-mono font-extrabold text-slate-900 bg-emerald-50/70 border border-emerald-200/80 rounded-xl sm:text-right tabular-nums whitespace-nowrap">
                             {formatRupiah(rowSubtotal)}
                           </div>
                         </div>
@@ -794,8 +816,8 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
             </div>
           </div>
 
-          {/* RIGHT 5 COLS: RINGKASAN TAGIHAN, PEMBAYARAN & TOMBOL SIMPAN */}
-          <div className="lg:col-span-5 space-y-5 lg:sticky lg:top-0">
+          {/* RIGHT 4 COLS: RINGKASAN TAGIHAN, PEMBAYARAN & TOMBOL SIMPAN */}
+          <div className="lg:col-span-4 space-y-5 lg:sticky lg:top-4">
             <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs">
               {/* Green Header */}
               <div className="px-5 py-4 bg-[#114232] text-white">
