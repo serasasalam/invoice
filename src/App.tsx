@@ -26,26 +26,22 @@ import {
   SerasaWorkspaceBundle,
 } from './services/serasaData';
 import { ConfirmActionModal, PendingSheetMutation } from './components/ConfirmActionModal';
-import { QuickEntryPanel } from './components/QuickEntryPanel';
-import { BookkeepingSummary } from './components/BookkeepingSummary';
 import { RowEditorModal } from './components/RowEditorModal';
 import { OperationalDashboard } from './components/OperationalDashboard';
 import { PosOrderModal } from './components/PosOrderModal';
 import { InvoiceStudio } from './components/InvoiceStudio';
 import { PricingCalculatorView } from './components/PricingCalculatorView';
+import { TrackerClosingView } from './components/TrackerClosingView';
 import { PWAInstallButton } from './components/PWAInstallButton';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { SERASA_SALAM_LOGO_DATA_URL } from './assets/serasaLogoDataUrl';
 import {
   AlertCircle,
-  ArrowUpDown,
   Calculator,
   Check,
   CheckCircle2,
   Code2,
   Copy,
-  Download,
-  Edit3,
   ExternalLink,
   FileDown,
   FileSpreadsheet,
@@ -59,7 +55,6 @@ import {
   RefreshCw,
   Search,
   ShoppingBag,
-  Trash2,
   Users,
   X,
 } from 'lucide-react';
@@ -127,11 +122,8 @@ export default function App() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
   const [selectedInvoiceNo, setSelectedInvoiceNo] = useState<string>('');
 
-  // Search & Table states for Tracker Closing view
+  // Global search state synced across views
   const [globalSearch, setGlobalSearch] = useState<string>('');
-  const [tableSearch, setTableSearch] = useState<string>('');
-  const [reverseOrder, setReverseOrder] = useState<boolean>(true);
-  const [subTabMode, setSubTabMode] = useState<'table' | 'entry' | 'summary'>('table');
 
   // Copy feedback for Apps Script code
   const [copiedScript, setCopiedScript] = useState<boolean>(false);
@@ -258,56 +250,6 @@ export default function App() {
     });
   };
 
-  // Single-row append for Tracker Closing via QuickEntryPanel
-  const requestAppendSingleRow = (
-    sheetTitle: string,
-    sheetData: SheetDataResult,
-    values: string[]
-  ) => {
-    const preview = sheetData.columns.map((col, idx) => ({
-      label: `${col.name} (${col.letter})${col.isFormulaColumn ? ' [Rumus Sheet]' : ''}`,
-      value: values[idx] || '',
-    }));
-
-    setPendingMutation({
-      type: 'append',
-      title: `Simpan Penjualan ke "${sheetTitle}" (Baris #${sheetData.nextInsertRow1Based})`,
-      description: `Data penjualan berikut akan langsung ditulis ke Baris #${sheetData.nextInsertRow1Based} pada tab "${sheetTitle}" di Google Spreadsheet:`,
-      spreadsheetTitle: 'Serasa Salam New Concept x Bisnis',
-      sheetTitle,
-      rowNumber1Based: sheetData.nextInsertRow1Based,
-      fieldPreview: preview,
-      onConfirm: async () => {
-        setIsMutating(true);
-        try {
-          await appendSheetRow(
-            spreadsheetId,
-            sheetTitle,
-            values,
-            sheetData.nextInsertRow1Based,
-            savedScriptUrl
-          );
-          setPendingMutation(null);
-          if (values[0]) {
-            setSelectedInvoiceNo(values[0]);
-          }
-          setStatusBanner(
-            `Penjualan baru berhasil disimpan ke Baris #${sheetData.nextInsertRow1Based} pada tab "${sheetTitle}".`
-          );
-          await loadAllSerasaData(savedScriptUrl, spreadsheetId);
-          setSubTabMode('table');
-        } catch (err: any) {
-          setApiError(err?.message || 'Gagal menyimpan baris ke Google Sheets.');
-          setPendingMutation(null);
-          if (!savedScriptUrl && !user) {
-            setActiveNav('connect');
-          }
-        } finally {
-          setIsMutating(false);
-        }
-      },
-    });
-  };
 
   // Update existing row in Tracker Closing
   const requestUpdateExistingRow = (
@@ -455,275 +397,6 @@ export default function App() {
     setUser(null);
   };
 
-  // Render Tracker Closing Table / Form / Summary
-  const renderTrackerClosingModule = (
-    title: string,
-    subtitle: string,
-    sheetData: SheetDataResult,
-    filterPredicate?: (row: { rowNumber1Based: number; values: string[] }) => boolean
-  ) => {
-    const sheetTitle = 'Tracker Closing';
-    const sheetId = 1373780580;
-
-    const baseRows = filterPredicate
-      ? sheetData.rows.filter(filterPredicate)
-      : sheetData.rows;
-
-    const q = (tableSearch || globalSearch).toLowerCase().trim();
-    const matchedRows = q
-      ? baseRows.filter(
-          (r) =>
-            r.values.some((c) => c.toLowerCase().includes(q)) ||
-            String(r.rowNumber1Based).includes(q)
-        )
-      : [...baseRows];
-
-    if (reverseOrder) {
-      matchedRows.reverse();
-    }
-
-    const handleDownloadCsv = () => {
-      const escapeCsv = (val: string) => `"${String(val ?? '').replace(/"/g, '""')}"`;
-      const lines = [
-        sheetData.headers.map(escapeCsv).join(','),
-        ...matchedRows.map((r) => r.values.map(escapeCsv).join(',')),
-      ];
-      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Serasa_Salam_Tracker_Closing.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    };
-
-    return (
-      <div className="space-y-5">
-        {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{title}</h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">{subtitle}</p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Sub-mode switcher */}
-            <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-full shadow-2xs">
-              <button
-                type="button"
-                onClick={() => setSubTabMode('table')}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors cursor-pointer ${
-                  subTabMode === 'table'
-                    ? 'bg-[#114232] text-white'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Tabel Data ({matchedRows.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setSubTabMode('entry')}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors cursor-pointer ${
-                  subTabMode === 'entry'
-                    ? 'bg-[#114232] text-white'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                + Input Penjualan
-              </button>
-              <button
-                type="button"
-                onClick={() => setSubTabMode('summary')}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors cursor-pointer ${
-                  subTabMode === 'summary'
-                    ? 'bg-[#114232] text-white'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Ringkasan Omzet
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsPosModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-full shadow-xs transition-colors cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ Input Penjualan (Popup)</span>
-            </button>
-          </div>
-        </div>
-
-        {subTabMode === 'entry' && bundle ? (
-          <PosOrderModal
-            isOpen={true}
-            isInline={true}
-            existingOrders={bundle.closingOrders}
-            nextInsertRow1Based={sheetData.nextInsertRow1Based}
-            onSaveRowsToTrackerClosing={handleSavePosRowsToTrackerClosing}
-          />
-        ) : subTabMode === 'summary' ? (
-          <BookkeepingSummary
-            sheetTitle={sheetTitle}
-            columns={sheetData.columns}
-            rows={baseRows}
-          />
-        ) : (
-          <div className="bg-white border border-slate-200/90 rounded-3xl overflow-hidden shadow-2xs">
-            {/* Table Toolbar */}
-            <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="relative flex-1 max-w-md">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={tableSearch}
-                  onChange={(e) => setTableSearch(e.target.value)}
-                  placeholder="Cari nama pemesan, nomor invoice, paket, tanggal..."
-                  className="w-full pl-9 pr-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-700"
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setReverseOrder((v) => !v)}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors cursor-pointer"
-                >
-                  <ArrowUpDown className="w-3.5 h-3.5" />
-                  <span>{reverseOrder ? 'Terbaru di Atas' : 'Urutan Baris Asli'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleDownloadCsv}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Unduh CSV</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Table Grid */}
-            <div className="overflow-x-auto max-h-[68vh]">
-              <table className="w-full text-left border-collapse">
-                <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
-                  <tr>
-                    <th className="py-3 px-3.5 w-16 font-mono">Baris</th>
-                    {sheetData.columns.map((col) => (
-                      <th
-                        key={col.index}
-                        className={`py-3 px-3.5 whitespace-nowrap ${
-                          col.inferredType === 'currency' || col.inferredType === 'number'
-                            ? 'text-right'
-                            : 'text-left'
-                        }`}
-                      >
-                        <span>{col.name}</span>
-                      </th>
-                    ))}
-                    <th className="py-3 px-4 text-right whitespace-nowrap">Invoice & Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-xs">
-                  {matchedRows.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={sheetData.columns.length + 2}
-                        className="py-12 text-center text-slate-400"
-                      >
-                        Tidak ada baris data yang cocok.
-                      </td>
-                    </tr>
-                  ) : (
-                    matchedRows.map((row) => (
-                      <tr
-                        key={row.rowNumber1Based}
-                        className="hover:bg-slate-50/90 transition-colors"
-                      >
-                        <td className="py-3 px-3.5 font-mono tabular-nums text-slate-400">
-                          #{row.rowNumber1Based}
-                        </td>
-                        {sheetData.columns.map((col) => {
-                          const cell = row.values[col.index] || '';
-                          const isNumeric =
-                            col.inferredType === 'currency' || col.inferredType === 'number';
-                          return (
-                            <td
-                              key={col.index}
-                              className={`py-3 px-3.5 max-w-[260px] truncate ${
-                                isNumeric
-                                  ? 'text-right font-mono tabular-nums font-bold text-slate-900'
-                                  : 'text-slate-700 font-medium'
-                              }`}
-                              title={cell}
-                            >
-                              {cell}
-                            </td>
-                          );
-                        })}
-                        <td className="py-3 px-4 text-right whitespace-nowrap">
-                          <div className="inline-flex items-center gap-1">
-                            {row.values[0] && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedInvoiceNo(row.values[0]);
-                                  setActiveNav('invoice');
-                                }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-lg transition-colors cursor-pointer mr-1"
-                                title="Buka & Unduh PDF Invoice"
-                              >
-                                <FileDown className="w-3 h-3" />
-                                <span>PDF Invoice</span>
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setEditingRow({
-                                  sheetTitle,
-                                  sheetId,
-                                  rowNumber1Based: row.rowNumber1Based,
-                                  values: row.values,
-                                  sheetData,
-                                })
-                              }
-                              className="p-1.5 text-slate-500 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
-                              title="Edit baris ini"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                requestDeleteExistingRow(
-                                  sheetTitle,
-                                  sheetId,
-                                  sheetData,
-                                  row.rowNumber1Based,
-                                  row.values
-                                )
-                              }
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                              title="Hapus baris ini"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   const navMenuGroups: {
     groupLabel: string;
@@ -829,8 +502,6 @@ export default function App() {
                       type="button"
                       onClick={() => {
                         setActiveNav(item.id);
-                        setSubTabMode('table');
-                        setTableSearch('');
                         setIsMobileSidebarOpen(false);
                       }}
                       className={`w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
@@ -1081,21 +752,48 @@ export default function App() {
                 <OperationalDashboard
                   orders={bundle.closingOrders}
                   onOpenPosModal={() => setIsPosModalOpen(true)}
-                  onNavigate={(v) => {
-                    setActiveNav(v as NavSection);
-                    setSubTabMode('table');
-                  }}
+                  onNavigate={(v) => setActiveNav(v as NavSection)}
                   onSelectInvoice={(inv) => setSelectedInvoiceNo(inv)}
                 />
               )}
 
               {/* 2. PENJUALAN (Tracker Closing) */}
-              {activeNav === 'closing' &&
-                renderTrackerClosingModule(
-                  'Data & Input Penjualan (Tracker Closing)',
-                  'Seluruh penjualan yang diinput dari aplikasi ini langsung masuk ke tab Tracker Closing di Google Spreadsheet.',
-                  bundle.closingSheet
-                )}
+              {activeNav === 'closing' && (
+                <TrackerClosingView
+                  key="closing"
+                  title="Data & Input Penjualan (Tracker Closing)"
+                  subtitle="Seluruh penjualan terhubung langsung ke tab Tracker Closing di Google Spreadsheet."
+                  sheetData={bundle.closingSheet}
+                  allOrders={bundle.closingOrders}
+                  defaultPaymentFilter="all"
+                  globalSearch={globalSearch}
+                  onOpenPosModal={() => setIsPosModalOpen(true)}
+                  onSavePosRowsToTrackerClosing={handleSavePosRowsToTrackerClosing}
+                  onOpenInvoice={(inv) => {
+                    setSelectedInvoiceNo(inv);
+                    setActiveNav('invoice');
+                  }}
+                  onEditRow={(rowNumber1Based, values) =>
+                    setEditingRow({
+                      sheetTitle: 'Tracker Closing',
+                      sheetId: 1373780580,
+                      rowNumber1Based,
+                      values,
+                      sheetData: bundle.closingSheet,
+                    })
+                  }
+                  onDeleteRow={(rowNumber1Based, values) =>
+                    requestDeleteExistingRow(
+                      'Tracker Closing',
+                      1373780580,
+                      bundle.closingSheet,
+                      rowNumber1Based,
+                      values
+                    )
+                  }
+                  onQuickMarkPaidAndDone={handleQuickMarkPaidAndDone}
+                />
+              )}
 
               {/* 3. BUAT & UNDUH PDF INVOICE */}
               {activeNav === 'invoice' && (
@@ -1107,17 +805,43 @@ export default function App() {
                 />
               )}
 
-              {/* 4. BELUM LUNAS / DP (Filtered Tracker Closing where Sisa > 0) */}
-              {activeNav === 'piutang' &&
-                renderTrackerClosingModule(
-                  'Daftar Pesanan Belum Lunas (DP)',
-                  'Filter khusus pesanan di Tracker Closing yang masih memiliki Sisa Tagihan > Rp 0 untuk memudahkan pelunasan & pengiriman Invoice PDF.',
-                  bundle.closingSheet,
-                  (row) => {
-                    const sisaStr = (row.values[15] || '').replace(/[^\d-]/g, '');
-                    return Number(sisaStr) > 0;
+              {/* 4. BELUM LUNAS / DP */}
+              {activeNav === 'piutang' && (
+                <TrackerClosingView
+                  key="piutang"
+                  title="Daftar Pesanan Belum Lunas (DP)"
+                  subtitle="Pantau sisa tagihan DP, lunasi dalam 1 klik, atau kirim PDF Invoice ke klien."
+                  sheetData={bundle.closingSheet}
+                  allOrders={bundle.closingOrders}
+                  defaultPaymentFilter="unpaid"
+                  globalSearch={globalSearch}
+                  onOpenPosModal={() => setIsPosModalOpen(true)}
+                  onSavePosRowsToTrackerClosing={handleSavePosRowsToTrackerClosing}
+                  onOpenInvoice={(inv) => {
+                    setSelectedInvoiceNo(inv);
+                    setActiveNav('invoice');
+                  }}
+                  onEditRow={(rowNumber1Based, values) =>
+                    setEditingRow({
+                      sheetTitle: 'Tracker Closing',
+                      sheetId: 1373780580,
+                      rowNumber1Based,
+                      values,
+                      sheetData: bundle.closingSheet,
+                    })
                   }
-                )}
+                  onDeleteRow={(rowNumber1Based, values) =>
+                    requestDeleteExistingRow(
+                      'Tracker Closing',
+                      1373780580,
+                      bundle.closingSheet,
+                      rowNumber1Based,
+                      values
+                    )
+                  }
+                  onQuickMarkPaidAndDone={handleQuickMarkPaidAndDone}
+                />
+              )}
 
               {/* 5. KALKULATOR HARGA */}
               {activeNav === 'calculator' && (
