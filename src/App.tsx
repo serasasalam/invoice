@@ -32,11 +32,17 @@ import { PosOrderModal } from './components/PosOrderModal';
 import { InvoiceStudio } from './components/InvoiceStudio';
 import { PricingCalculatorView } from './components/PricingCalculatorView';
 import { TrackerClosingView } from './components/TrackerClosingView';
+import {
+  classifyGroupedReminder,
+  CustomerRemindersView,
+  groupOrdersByInvoice,
+} from './components/CustomerRemindersView';
 import { PWAInstallButton } from './components/PWAInstallButton';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { SERASA_SALAM_LOGO_DATA_URL } from './assets/serasaLogoDataUrl';
 import {
   AlertCircle,
+  BellRing,
   Calculator,
   Check,
   CheckCircle2,
@@ -64,6 +70,7 @@ type NavSection =
   | 'closing'
   | 'invoice'
   | 'piutang'
+  | 'reminders'
   | 'calculator'
   | 'connect';
 
@@ -139,6 +146,7 @@ export default function App() {
   } | null>(null);
   const [pendingMutation, setPendingMutation] = useState<PendingSheetMutation | null>(null);
   const [isMutating, setIsMutating] = useState<boolean>(false);
+  const [updatingRowNumbers, setUpdatingRowNumbers] = useState<number[]>([]);
 
   // Initialize Firebase Auth listener silently in background
   useEffect(() => {
@@ -181,14 +189,18 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Compute badges for sidebar
+  // Compute badges for sidebar (grouped 1 invoice = 1 customer reminder)
   const sidebarBadges = useMemo(() => {
-    if (!bundle) return { dpCount: 0, totalInvoices: 0 };
+    if (!bundle) return { dpCount: 0, totalInvoices: 0, reminderCount: 0 };
     const dpCount = bundle.closingOrders.filter((o) => o.sisa > 0).length;
     const totalInvoices = new Set(
       bundle.closingOrders.map((o) => o.invoiceNo).filter(Boolean)
     ).size;
-    return { dpCount, totalInvoices };
+    const grouped = groupOrdersByInvoice(bundle.closingOrders);
+    const reminderCount = grouped.filter(
+      (g) => classifyGroupedReminder(g) !== 'after_sales'
+    ).length;
+    return { dpCount, totalInvoices, reminderCount };
   }, [bundle]);
 
   // Save multi-row or single-row order from POS Modal into Tracker Closing
@@ -300,18 +312,149 @@ export default function App() {
     });
   };
 
-  // Quick 1-click "Lunasi & Selesai" on an order in Tracker Closing
-  const handleQuickMarkPaidAndDone = (order: ClosingOrderItem) => {
+  // Quick 1-click "Lunasi & Selesai" on single row or full grouped invoice
+  const handleQuickMarkPaidAndDone = (target: ClosingOrderItem | ClosingOrderItem[]) => {
     if (!bundle) return;
-    const updated = [...order.rawValues];
-    updated[14] = String(order.totalTagihan); // Col O: Bayar = Total Tagihan
-    updated[17] = 'Selesai'; // Col R: Status = Selesai
-    requestUpdateExistingRow(
-      'Tracker Closing',
-      bundle.closingSheet,
-      order.rowNumber1Based,
-      updated
-    );
+    const items = Array.isArray(target) ? target : [target];
+    if (items.length === 0) return;
+
+    if (items.length === 1) {
+      const order = items[0];
+      const updated = [...order.rawValues];
+      updated[14] = String(order.totalTagihan); // Col O: Bayar = Total Tagihan
+      updated[17] = 'Selesai'; // Col R: Status = Selesai
+      requestUpdateExistingRow(
+        'Tracker Closing',
+        bundle.closingSheet,
+        order.rowNumber1Based,
+        updated
+      );
+      return;
+    }
+
+    const preview = items.map((order, idx) => ({
+      label: `Item #${idx + 1} (Baris #${order.rowNumber1Based})`,
+      value: `${order.paket} — Bayar menjadi Rp ${order.totalTagihan.toLocaleString('id-ID')} (Selesai)`,
+    }));
+
+    setPendingMutation({
+      type: 'update',
+      title: `Lunasi Semua Item Faktur ${items[0].invoiceNo || ''}`,
+      description: `${items.length} baris item dalam faktur atas nama "${items[0].namaKlien}" akan ditandai Lunas & Selesai di Tracker Closing:`,
+      spreadsheetTitle: 'Serasa Salam New Concept x Bisnis',
+      sheetTitle: 'Tracker Closing',
+      rowNumber1Based: items[0].rowNumber1Based,
+      fieldPreview: preview,
+      onConfirm: async () => {
+        setIsMutating(true);
+        try {
+          for (const order of items) {
+            const updated = [...order.rawValues];
+            updated[14] = String(order.totalTagihan);
+            updated[17] = 'Selesai';
+            await updateSheetRow(
+              spreadsheetId,
+              'Tracker Closing',
+              order.rowNumber1Based,
+              updated,
+              savedScriptUrl
+            );
+          }
+          setPendingMutation(null);
+          setStatusBanner(
+            `Seluruh item pada faktur ${items[0].invoiceNo} berhasil ditandai Lunas & Selesai.`
+          );
+          await loadAllSerasaData(savedScriptUrl, spreadsheetId);
+        } catch (err: any) {
+          setApiError(err?.message || 'Gagal memperbarui status pelunasan di Google Sheets.');
+          setPendingMutation(null);
+          if (!savedScriptUrl && !user) {
+            setActiveNav('connect');
+          }
+        } finally {
+          setIsMutating(false);
+        }
+      },
+    });
+  };
+
+  // Instant 1-click inline status update (Col R / index 17) directly to Google Sheet
+  const handleQuickUpdateStatus = async (
+    target: ClosingOrderItem | ClosingOrderItem[],
+    newStatus: string
+  ) => {
+    if (!bundle) return;
+    const cleanStatus = newStatus.trim();
+    if (!cleanStatus) return;
+
+    const items = Array.isArray(target) ? target : [target];
+    if (items.length === 0) return;
+
+    if (!savedScriptUrl && !user) {
+      setApiError(
+        'Untuk langsung mengubah status pekerjaan ke Google Sheet, hubungkan URL Web App Apps Script terlebih dahulu di menu Koneksi Google Sheet.'
+      );
+      setActiveNav('connect');
+      return;
+    }
+
+    const targetRowNums = items.map((it) => it.rowNumber1Based);
+    setUpdatingRowNumbers((prev) => Array.from(new Set([...prev, ...targetRowNums])));
+    setApiError(null);
+
+    try {
+      for (const order of items) {
+        const updated = [...order.rawValues];
+        while (updated.length <= 17) updated.push('');
+        updated[17] = cleanStatus;
+        await updateSheetRow(
+          spreadsheetId,
+          'Tracker Closing',
+          order.rowNumber1Based,
+          updated,
+          savedScriptUrl
+        );
+      }
+
+      // Optimistic local state update for immediate UI feedback
+      setBundle((prev) => {
+        if (!prev) return prev;
+        const rowSet = new Set(targetRowNums);
+        const updatedRows = prev.closingSheet.rows.map((r) => {
+          if (!rowSet.has(r.rowNumber1Based)) return r;
+          const nextVals = [...r.values];
+          while (nextVals.length <= 17) nextVals.push('');
+          nextVals[17] = cleanStatus;
+          return { ...r, values: nextVals };
+        });
+        const updatedOrders = prev.closingOrders.map((o) => {
+          if (!rowSet.has(o.rowNumber1Based)) return o;
+          const nextVals = [...o.rawValues];
+          while (nextVals.length <= 17) nextVals.push('');
+          nextVals[17] = cleanStatus;
+          return { ...o, status: cleanStatus, rawValues: nextVals };
+        });
+        return {
+          ...prev,
+          closingSheet: { ...prev.closingSheet, rows: updatedRows },
+          closingOrders: updatedOrders,
+        };
+      });
+
+      const clientLabel = items[0].namaKlien || items[0].invoiceNo || `Baris #${items[0].rowNumber1Based}`;
+      setStatusBanner(
+        `Status pekerjaan "${clientLabel}" berhasil diperbarui ke "${cleanStatus}" dan tersimpan ke Google Sheet.`
+      );
+      await loadAllSerasaData(savedScriptUrl, spreadsheetId);
+    } catch (err: any) {
+      setApiError(err?.message || 'Gagal memperbarui status pekerjaan di Google Sheets.');
+      if (!savedScriptUrl && !user) {
+        setActiveNav('connect');
+      }
+    } finally {
+      const targetSet = new Set(targetRowNums);
+      setUpdatingRowNumbers((prev) => prev.filter((n) => !targetSet.has(n)));
+    }
   };
 
   // Delete row
@@ -434,6 +577,16 @@ export default function App() {
           icon: Users,
           badge: sidebarBadges.dpCount > 0 ? `${sidebarBadges.dpCount} DP` : undefined,
           badgeColor: 'bg-amber-100 text-amber-800',
+        },
+        {
+          id: 'reminders',
+          label: 'Pengingat & Follow Up',
+          icon: BellRing,
+          badge:
+            sidebarBadges.reminderCount > 0
+              ? `${sidebarBadges.reminderCount}`
+              : undefined,
+          badgeColor: 'bg-rose-100 text-rose-800',
         },
       ],
     },
@@ -754,6 +907,8 @@ export default function App() {
                   onOpenPosModal={() => setIsPosModalOpen(true)}
                   onNavigate={(v) => setActiveNav(v as NavSection)}
                   onSelectInvoice={(inv) => setSelectedInvoiceNo(inv)}
+                  onUpdateStatus={handleQuickUpdateStatus}
+                  updatingRowNumbers={updatingRowNumbers}
                 />
               )}
 
@@ -792,6 +947,8 @@ export default function App() {
                     )
                   }
                   onQuickMarkPaidAndDone={handleQuickMarkPaidAndDone}
+                  onUpdateStatus={handleQuickUpdateStatus}
+                  updatingRowNumbers={updatingRowNumbers}
                 />
               )}
 
@@ -840,10 +997,36 @@ export default function App() {
                     )
                   }
                   onQuickMarkPaidAndDone={handleQuickMarkPaidAndDone}
+                  onUpdateStatus={handleQuickUpdateStatus}
+                  updatingRowNumbers={updatingRowNumbers}
                 />
               )}
 
-              {/* 5. KALKULATOR HARGA */}
+              {/* 5. PENGINGAT & FOLLOW UP WHATSAPP */}
+              {activeNav === 'reminders' && (
+                <CustomerRemindersView
+                  orders={bundle.closingOrders}
+                  globalSearch={globalSearch}
+                  onOpenInvoice={(inv) => {
+                    setSelectedInvoiceNo(inv);
+                    setActiveNav('invoice');
+                  }}
+                  onEditRow={(rowNumber1Based, values) =>
+                    setEditingRow({
+                      sheetTitle: 'Tracker Closing',
+                      sheetId: 1373780580,
+                      rowNumber1Based,
+                      values,
+                      sheetData: bundle.closingSheet,
+                    })
+                  }
+                  onQuickMarkPaidAndDone={handleQuickMarkPaidAndDone}
+                  onUpdateStatus={handleQuickUpdateStatus}
+                  updatingRowNumbers={updatingRowNumbers}
+                />
+              )}
+
+              {/* 6. KALKULATOR HARGA */}
               {activeNav === 'calculator' && (
                 <PricingCalculatorView
                   onOpenPosWithPreset={() => setIsPosModalOpen(true)}

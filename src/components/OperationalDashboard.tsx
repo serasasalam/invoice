@@ -1,11 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ClosingOrderItem } from '../services/serasaData';
+import {
+  ClosingOrderItem,
+  getJobStatusTone,
+  JOB_STATUS_OPTIONS,
+} from '../services/serasaData';
 import { formatRupiah } from './BookkeepingSummary';
 import {
   ArrowUpRight,
   CheckCircle2,
   Clock,
   FileDown,
+  Loader2,
   Plus,
 } from 'lucide-react';
 
@@ -14,6 +19,11 @@ interface OperationalDashboardProps {
   onOpenPosModal: () => void;
   onNavigate: (view: string) => void;
   onSelectInvoice: (invoiceNo: string) => void;
+  onUpdateStatus?: (
+    target: ClosingOrderItem | ClosingOrderItem[],
+    newStatus: string
+  ) => Promise<void> | void;
+  updatingRowNumbers?: number[];
 }
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov'];
@@ -44,6 +54,8 @@ export const OperationalDashboard: React.FC<OperationalDashboardProps> = ({
   onOpenPosModal,
   onNavigate,
   onSelectInvoice,
+  onUpdateStatus,
+  updatingRowNumbers = [],
 }) => {
   const [chartTab, setChartTab] = useState<'bulanan' | 'paket'>('bulanan');
   const [clockStr, setClockStr] = useState<string>(() => {
@@ -447,7 +459,7 @@ export const OperationalDashboard: React.FC<OperationalDashboardProps> = ({
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 space-y-1">
+                <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 space-y-1.5">
                   <div className="text-[11px] font-semibold text-amber-700">
                     Sisa Tagihan / Deadline:
                   </div>
@@ -459,6 +471,35 @@ export const OperationalDashboard: React.FC<OperationalDashboardProps> = ({
                   <div className="text-[11px] font-semibold text-amber-800">
                     Deadline: {urgentDpOrder.deadline || urgentDpOrder.tanggalAcara || '-'}
                   </div>
+                  {onUpdateStatus && (
+                    <div className="pt-1.5 mt-1.5 border-t border-amber-200/70 flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-semibold text-amber-900">
+                        Tahap Kerja:
+                      </span>
+                      <div className="inline-flex items-center gap-1">
+                        {updatingRowNumbers.includes(urgentDpOrder.rowNumber1Based) && (
+                          <Loader2 className="w-3 h-3 text-emerald-700 animate-spin" />
+                        )}
+                        <select
+                          value={urgentDpOrder.status || 'Menunggu DP'}
+                          disabled={updatingRowNumbers.includes(urgentDpOrder.rowNumber1Based)}
+                          onChange={(e) => onUpdateStatus(urgentDpOrder, e.target.value)}
+                          aria-label={`Ubah status ${urgentDpOrder.namaKlien}`}
+                          className="px-2 py-1 text-[11px] font-bold bg-white border border-amber-300 rounded-lg text-slate-900 focus:outline-none focus:border-emerald-700 cursor-pointer"
+                        >
+                          {Array.from(
+                            new Set(
+                              [...JOB_STATUS_OPTIONS, urgentDpOrder.status].filter(Boolean)
+                            )
+                          ).map((st) => (
+                            <option key={st} value={st}>
+                              {st}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
@@ -573,6 +614,8 @@ export const OperationalDashboard: React.FC<OperationalDashboardProps> = ({
                 .reverse()
                 .map((o) => {
                   const initial = (o.namaKlien || 'S').charAt(0).toUpperCase();
+                  const statusTone = getJobStatusTone(o.status, o.sisa <= 0);
+                  const isUpdating = updatingRowNumbers.includes(o.rowNumber1Based);
                   return (
                     <div
                       key={o.rowNumber1Based}
@@ -596,15 +639,43 @@ export const OperationalDashboard: React.FC<OperationalDashboardProps> = ({
                         </div>
                       </div>
 
-                      <span
-                        className={`text-[10px] font-bold px-2.5 py-1 rounded-lg shrink-0 ${
-                          o.sisa > 0
-                            ? 'bg-amber-50 text-amber-800'
-                            : 'bg-emerald-50 text-emerald-800'
-                        }`}
+                      <div
+                        className="flex items-center gap-2 shrink-0"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        {o.sisa > 0 ? 'DP Piutang' : 'Lunas'}
-                      </span>
+                        {onUpdateStatus ? (
+                          <div className="inline-flex items-center gap-1">
+                            {isUpdating && (
+                              <Loader2 className="w-3 h-3 text-emerald-700 animate-spin" />
+                            )}
+                            <select
+                              value={statusTone.label}
+                              disabled={isUpdating}
+                              onChange={(e) => onUpdateStatus(o, e.target.value)}
+                              aria-label={`Ubah status ${o.namaKlien}`}
+                              className={`px-2 py-1 text-[11px] font-bold rounded-lg border cursor-pointer focus:outline-none focus:border-emerald-700 ${statusTone.bgClass} ${statusTone.borderClass} ${statusTone.textClass}`}
+                            >
+                              {Array.from(
+                                new Set([...JOB_STATUS_OPTIONS, statusTone.label].filter(Boolean))
+                              ).map((st) => (
+                                <option key={st} value={st} className="text-slate-900 bg-white">
+                                  {st}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ) : (
+                          <span
+                            className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${
+                              o.sisa > 0
+                                ? 'bg-amber-50 text-amber-800'
+                                : 'bg-emerald-50 text-emerald-800'
+                            }`}
+                          >
+                            {o.sisa > 0 ? 'DP Piutang' : 'Lunas'}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

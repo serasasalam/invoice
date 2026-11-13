@@ -2,8 +2,69 @@ import {
   DEFAULT_SERASA_SALAM_SPREADSHEET_ID,
   getSheetValues,
   parseNumericCell,
+  SERASA_TAB_RULES,
   SheetDataResult,
 } from './sheetsApi';
+
+export const JOB_STATUS_OPTIONS: string[] =
+  SERASA_TAB_RULES['Tracker Closing'].presetOptions?.Status || [
+    'Menunggu DP',
+    'Desain',
+    'Revisi',
+    'Cetak',
+    'Finishing',
+    'Dikirim',
+    'Selesai',
+  ];
+
+export function getJobStatusTone(
+  status: string,
+  isPaid: boolean = false
+): {
+  label: string;
+  textClass: string;
+  dotClass: string;
+  bgClass: string;
+  borderClass: string;
+} {
+  const clean = (status || '').trim() || (isPaid ? 'Selesai' : 'Menunggu DP');
+  const lower = clean.toLowerCase();
+
+  if (lower.includes('selesai') || lower.includes('lunas') || lower.includes('dikirim')) {
+    return {
+      label: clean,
+      textClass: 'text-emerald-800',
+      dotClass: 'bg-emerald-600',
+      bgClass: 'bg-emerald-50/70',
+      borderClass: 'border-emerald-200',
+    };
+  }
+  if (lower.includes('revisi') || lower.includes('menunggu')) {
+    return {
+      label: clean,
+      textClass: 'text-amber-800',
+      dotClass: 'bg-amber-500',
+      bgClass: 'bg-amber-50/70',
+      borderClass: 'border-amber-200',
+    };
+  }
+  if (lower.includes('cetak') || lower.includes('finishing') || lower.includes('desain')) {
+    return {
+      label: clean,
+      textClass: 'text-sky-900',
+      dotClass: 'bg-sky-600',
+      bgClass: 'bg-sky-50/70',
+      borderClass: 'border-sky-200',
+    };
+  }
+  return {
+    label: clean,
+    textClass: 'text-slate-700',
+    dotClass: 'bg-slate-400',
+    bgClass: 'bg-slate-50',
+    borderClass: 'border-slate-200',
+  };
+}
 
 export interface ClosingOrderItem {
   rowNumber1Based: number;

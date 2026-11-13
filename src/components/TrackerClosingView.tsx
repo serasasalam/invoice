@@ -8,12 +8,18 @@ import {
   Edit3,
   FileDown,
   LayoutList,
+  Loader2,
   MessageCircle,
   Plus,
   Search,
   Trash2,
 } from 'lucide-react';
-import { ClosingOrderItem, parseClosingOrders } from '../services/serasaData';
+import {
+  ClosingOrderItem,
+  getJobStatusTone,
+  JOB_STATUS_OPTIONS,
+  parseClosingOrders,
+} from '../services/serasaData';
 import { SheetDataResult } from '../services/sheetsApi';
 import { BookkeepingSummary, formatRupiah } from './BookkeepingSummary';
 import { PosOrderModal } from './PosOrderModal';
@@ -34,6 +40,11 @@ interface TrackerClosingViewProps {
   onEditRow: (rowNumber1Based: number, values: string[]) => void;
   onDeleteRow: (rowNumber1Based: number, values: string[]) => void;
   onQuickMarkPaidAndDone: (order: ClosingOrderItem) => void;
+  onUpdateStatus?: (
+    target: ClosingOrderItem | ClosingOrderItem[],
+    newStatus: string
+  ) => Promise<void> | void;
+  updatingRowNumbers?: number[];
 }
 
 type ViewTab = 'list' | 'entry' | 'summary';
@@ -60,42 +71,6 @@ function formatDisplayPhone(raw: string): { display: string; waUrl: string | nul
   };
 }
 
-function getStatusTone(status: string, isPaid: boolean): {
-  label: string;
-  textClass: string;
-  dotClass: string;
-} {
-  const clean = (status || '').trim() || (isPaid ? 'Selesai' : 'Menunggu DP');
-  const lower = clean.toLowerCase();
-
-  if (lower.includes('selesai') || lower.includes('lunas') || lower.includes('dikirim')) {
-    return {
-      label: clean,
-      textClass: 'text-emerald-800',
-      dotClass: 'bg-emerald-600',
-    };
-  }
-  if (lower.includes('revisi') || lower.includes('menunggu')) {
-    return {
-      label: clean,
-      textClass: 'text-amber-800',
-      dotClass: 'bg-amber-500',
-    };
-  }
-  if (lower.includes('cetak') || lower.includes('finishing') || lower.includes('desain')) {
-    return {
-      label: clean,
-      textClass: 'text-slate-800',
-      dotClass: 'bg-sky-600',
-    };
-  }
-  return {
-    label: clean,
-    textClass: 'text-slate-700',
-    dotClass: 'bg-slate-400',
-  };
-}
-
 export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
   title,
   subtitle,
@@ -109,16 +84,27 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
   onEditRow,
   onDeleteRow,
   onQuickMarkPaidAndDone,
+  onUpdateStatus,
+  updatingRowNumbers = [],
 }) => {
   const [activeTab, setActiveTab] = useState<ViewTab>('list');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>(defaultPaymentFilter);
   const [paketFilter, setPaketFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [tableDensity, setTableDensity] = useState<'clean' | 'spreadsheet'>('clean');
   const [expandedRowNum, setExpandedRowNum] = useState<number | null>(null);
 
   const parsedOrders = useMemo(() => parseClosingOrders(sheetData), [sheetData]);
+
+  const statusChoices = useMemo(() => {
+    const set = new Set<string>(JOB_STATUS_OPTIONS);
+    for (const o of parsedOrders) {
+      if (o.status) set.add(o.status);
+    }
+    return Array.from(set);
+  }, [parsedOrders]);
 
   const uniquePackages = useMemo(() => {
     const set = new Set<string>();
@@ -144,6 +130,12 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
       if (paymentFilter === 'unpaid' && order.sisa <= 0) return false;
       if (paymentFilter === 'paid' && order.sisa > 0) return false;
       if (paketFilter !== 'all' && order.paket !== paketFilter) return false;
+      if (
+        statusFilter !== 'all' &&
+        (order.status || '').toLowerCase() !== statusFilter.toLowerCase()
+      ) {
+        return false;
+      }
 
       if (!q) return true;
       return (
@@ -162,7 +154,15 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
       return [...list].reverse();
     }
     return list;
-  }, [parsedOrders, searchQuery, globalSearch, paymentFilter, paketFilter, sortOrder]);
+  }, [
+    parsedOrders,
+    searchQuery,
+    globalSearch,
+    paymentFilter,
+    paketFilter,
+    statusFilter,
+    sortOrder,
+  ]);
 
   const summaryMetrics = useMemo(() => {
     let totalOmzet = 0;
@@ -392,8 +392,22 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                 </div>
               </div>
 
-              {/* Right: Paket Filter + Sort + View Density + Export */}
+              {/* Right: Status Filter + Paket Filter + Sort + View Density + Export */}
               <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  aria-label="Filter status pekerjaan"
+                  className="px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:bg-white focus:outline-none focus:border-emerald-700 cursor-pointer"
+                >
+                  <option value="all">Semua Status</option>
+                  {statusChoices.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
+
                 <select
                   value={paketFilter}
                   onChange={(e) => setPaketFilter(e.target.value)}
@@ -465,16 +479,20 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                   Tidak ada data penjualan yang cocok dengan filter saat ini.
                 </p>
                 <p className="text-xs text-slate-500 max-w-md mx-auto">
-                  Coba hapus kata kunci pencarian, ubah filter status pembayaran, atau tambahkan pesanan baru.
+                  Coba hapus kata kunci pencarian, ubah filter status pekerjaan/pembayaran, atau tambahkan pesanan baru.
                 </p>
                 <div className="pt-2 flex items-center justify-center gap-2.5">
-                  {(searchQuery || paymentFilter !== 'all' || paketFilter !== 'all') && (
+                  {(searchQuery ||
+                    paymentFilter !== 'all' ||
+                    paketFilter !== 'all' ||
+                    statusFilter !== 'all') && (
                     <button
                       type="button"
                       onClick={() => {
                         setSearchQuery('');
                         setPaymentFilter('all');
                         setPaketFilter('all');
+                        setStatusFilter('all');
                       }}
                       className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
                     >
@@ -525,6 +543,28 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                           const cell = order.rawValues[col.index] || '';
                           const isNumeric =
                             col.inferredType === 'currency' || col.inferredType === 'number';
+                          const isUpdating = updatingRowNumbers.includes(order.rowNumber1Based);
+                          if (col.index === 17 && onUpdateStatus) {
+                            const currentSt = cell.trim() || order.status || 'Menunggu DP';
+                            const options = Array.from(new Set([...statusChoices, currentSt]));
+                            return (
+                              <td key={col.index} className="py-2 px-3 whitespace-nowrap">
+                                <select
+                                  value={currentSt}
+                                  disabled={isUpdating}
+                                  onChange={(e) => onUpdateStatus(order, e.target.value)}
+                                  aria-label={`Ubah status ${order.namaKlien}`}
+                                  className="px-2 py-1 text-xs font-semibold bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-emerald-700 disabled:opacity-50 cursor-pointer"
+                                >
+                                  {options.map((opt) => (
+                                    <option key={opt} value={opt}>
+                                      {opt}
+                                    </option>
+                                  ))}
+                                </select>
+                              </td>
+                            );
+                          }
                           return (
                             <td
                               key={col.index}
@@ -593,8 +633,14 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                       {filteredOrders.map((order) => {
                         const phone = formatDisplayPhone(order.noWa);
                         const isPaid = order.sisa <= 0;
-                        const statusTone = getStatusTone(order.status, isPaid);
+                        const statusTone = getJobStatusTone(order.status, isPaid);
                         const isExpanded = expandedRowNum === order.rowNumber1Based;
+                        const isUpdatingStatus = updatingRowNumbers.includes(
+                          order.rowNumber1Based
+                        );
+                        const rowStatusOptions = Array.from(
+                          new Set([...statusChoices, statusTone.label])
+                        );
 
                         return (
                           <React.Fragment key={order.rowNumber1Based}>
@@ -681,18 +727,45 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                                 </div>
                               </td>
 
-                              {/* 4. Status & Deadline */}
-                              <td className="py-3.5 px-3 align-top">
-                                <div className="flex items-center gap-1.5">
-                                  <span
-                                    className={`w-2 h-2 rounded-full shrink-0 ${statusTone.dotClass}`}
-                                    aria-hidden="true"
-                                  />
-                                  <span className={`font-bold text-xs ${statusTone.textClass}`}>
-                                    {statusTone.label}
-                                  </span>
-                                </div>
-                                <div className="mt-1 text-xs text-slate-500">
+                              {/* 4. Status Pekerjaan (Inline Quick Select) & Deadline */}
+                              <td className="py-3 px-3 align-top">
+                                {onUpdateStatus ? (
+                                  <div className="inline-flex items-center gap-1.5">
+                                    {isUpdatingStatus ? (
+                                      <Loader2 className="w-3.5 h-3.5 text-emerald-700 animate-spin shrink-0" />
+                                    ) : (
+                                      <span
+                                        className={`w-2 h-2 rounded-full shrink-0 ${statusTone.dotClass}`}
+                                        aria-hidden="true"
+                                      />
+                                    )}
+                                    <select
+                                      value={statusTone.label}
+                                      disabled={isUpdatingStatus}
+                                      onChange={(e) => onUpdateStatus(order, e.target.value)}
+                                      aria-label={`Ubah status pekerjaan ${order.namaKlien}`}
+                                      title="Klik untuk langsung memperbarui status pekerjaan ke Google Sheet"
+                                      className={`px-2 py-1 text-xs font-bold rounded-lg border transition-colors focus:outline-none focus:border-emerald-700 disabled:opacity-60 cursor-pointer ${statusTone.bgClass} ${statusTone.borderClass} ${statusTone.textClass}`}
+                                    >
+                                      {rowStatusOptions.map((st) => (
+                                        <option key={st} value={st} className="text-slate-900 bg-white">
+                                          {st}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5">
+                                    <span
+                                      className={`w-2 h-2 rounded-full shrink-0 ${statusTone.dotClass}`}
+                                      aria-hidden="true"
+                                    />
+                                    <span className={`font-bold text-xs ${statusTone.textClass}`}>
+                                      {statusTone.label}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="mt-1.5 text-xs text-slate-500">
                                   {order.deadline ? `Deadline: ${order.deadline}` : 'Tanpa deadline'}
                                   {order.metodeBayar ? ` · ${order.metodeBayar}` : ''}
                                 </div>
@@ -764,10 +837,40 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                               </td>
                             </tr>
 
-                            {/* Expandable Full Detail Panel (Clean Grid for Remaining Sheet Fields) */}
+                            {/* Expandable Full Detail Panel (Clean Grid + Interactive Progress Bar) */}
                             {isExpanded && (
                               <tr className="bg-slate-50/70">
-                                <td colSpan={5} className="px-5 py-4 border-t border-slate-100">
+                                <td colSpan={5} className="px-5 py-4 border-t border-slate-100 space-y-4">
+                                  {onUpdateStatus && (
+                                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-200/80">
+                                      <span className="text-xs font-bold text-slate-700">
+                                        Update Cepat Tahap Pekerjaan:
+                                      </span>
+                                      <div className="flex flex-wrap items-center gap-1.5">
+                                        {JOB_STATUS_OPTIONS.map((stage) => {
+                                          const isCurrent =
+                                            statusTone.label.toLowerCase() ===
+                                            stage.toLowerCase();
+                                          return (
+                                            <button
+                                              key={stage}
+                                              type="button"
+                                              disabled={isUpdatingStatus || isCurrent}
+                                              onClick={() => onUpdateStatus(order, stage)}
+                                              className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-colors cursor-pointer disabled:cursor-default ${
+                                                isCurrent
+                                                  ? 'bg-[#114232] text-white border-[#114232]'
+                                                  : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-600 hover:text-emerald-800'
+                                              }`}
+                                            >
+                                              {stage}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+
                                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                                     <div>
                                       <div className="text-slate-400 font-medium">Rincian Biaya</div>
@@ -819,7 +922,13 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                   {filteredOrders.map((order) => {
                     const phone = formatDisplayPhone(order.noWa);
                     const isPaid = order.sisa <= 0;
-                    const statusTone = getStatusTone(order.status, isPaid);
+                    const statusTone = getJobStatusTone(order.status, isPaid);
+                    const isUpdatingStatus = updatingRowNumbers.includes(
+                      order.rowNumber1Based
+                    );
+                    const rowStatusOptions = Array.from(
+                      new Set([...statusChoices, statusTone.label])
+                    );
 
                     return (
                       <div key={order.rowNumber1Based} className="p-4 space-y-3">
@@ -853,15 +962,41 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                               <span className="font-mono tabular-nums"> · {order.qty} pcs</span>
                             )}
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className={`w-2 h-2 rounded-full ${statusTone.dotClass}`}
-                              aria-hidden="true"
-                            />
-                            <span className={`font-semibold ${statusTone.textClass}`}>
-                              {statusTone.label}
-                            </span>
-                          </div>
+                          {onUpdateStatus ? (
+                            <div className="inline-flex items-center gap-1.5">
+                              {isUpdatingStatus ? (
+                                <Loader2 className="w-3.5 h-3.5 text-emerald-700 animate-spin" />
+                              ) : (
+                                <span
+                                  className={`w-2 h-2 rounded-full ${statusTone.dotClass}`}
+                                  aria-hidden="true"
+                                />
+                              )}
+                              <select
+                                value={statusTone.label}
+                                disabled={isUpdatingStatus}
+                                onChange={(e) => onUpdateStatus(order, e.target.value)}
+                                aria-label={`Ubah status ${order.namaKlien}`}
+                                className={`min-h-[36px] px-2.5 py-1 text-xs font-bold rounded-lg border ${statusTone.bgClass} ${statusTone.borderClass} ${statusTone.textClass}`}
+                              >
+                                {rowStatusOptions.map((st) => (
+                                  <option key={st} value={st} className="text-slate-900 bg-white">
+                                    {st}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={`w-2 h-2 rounded-full ${statusTone.dotClass}`}
+                                aria-hidden="true"
+                              />
+                              <span className={`font-semibold ${statusTone.textClass}`}>
+                                {statusTone.label}
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         <div className="pt-1 flex flex-wrap items-center gap-2">
