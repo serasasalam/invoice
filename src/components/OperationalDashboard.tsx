@@ -161,9 +161,9 @@ export const OperationalDashboard: React.FC<OperationalDashboardProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Heading & Primary Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             Dasbor Penjualan & Invoice
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
@@ -172,33 +172,33 @@ export const OperationalDashboard: React.FC<OperationalDashboardProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="grid grid-cols-2 sm:flex items-center gap-2.5 sm:gap-3 shrink-0 w-full sm:w-auto">
           <button
             type="button"
             onClick={onOpenPosModal}
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-full shadow-xs transition-colors cursor-pointer"
+            className="min-h-[44px] inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2.5 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-full shadow-xs transition-colors cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>+ Input Penjualan Baru</span>
+            <Plus className="w-4 h-4 shrink-0" />
+            <span className="truncate">Input Penjualan</span>
           </button>
 
           <button
             type="button"
             onClick={() => onNavigate('invoice')}
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-full shadow-2xs transition-colors cursor-pointer"
+            className="min-h-[44px] inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-full shadow-2xs transition-colors cursor-pointer"
           >
-            <FileDown className="w-4 h-4 text-[#114232]" />
-            <span>Buat & Unduh PDF Invoice</span>
+            <FileDown className="w-4 h-4 text-[#114232] shrink-0" />
+            <span className="truncate">PDF Invoice</span>
           </button>
         </div>
       </div>
 
       {/* 4 Hero Sales KPI Cards (Strictly from Tracker Closing) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 sm:gap-5">
         {/* Card 1: Total Penjualan (Tracker Closing) */}
         <div
           onClick={() => onNavigate('closing')}
-          className="p-6 rounded-3xl bg-[#114232] text-white flex flex-col justify-between shadow-sm cursor-pointer hover:bg-[#0e382a] transition-colors min-h-[168px]"
+          className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#114232] text-white flex flex-col justify-between shadow-sm cursor-pointer hover:bg-[#0e382a] transition-colors min-h-[132px] sm:min-h-[168px]"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-emerald-100/90">
@@ -224,7 +224,7 @@ export const OperationalDashboard: React.FC<OperationalDashboardProps> = ({
         {/* Card 2: Uang Masuk Pembayaran Order */}
         <div
           onClick={() => onNavigate('closing')}
-          className="p-6 rounded-3xl bg-white border border-slate-200/80 flex flex-col justify-between shadow-2xs cursor-pointer hover:border-slate-300 transition-colors min-h-[168px]"
+          className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white border border-slate-200/80 flex flex-col justify-between shadow-2xs cursor-pointer hover:border-slate-300 transition-colors min-h-[132px] sm:min-h-[168px]"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">
@@ -250,7 +250,7 @@ export const OperationalDashboard: React.FC<OperationalDashboardProps> = ({
         {/* Card 3: Sisa Tagihan / Piutang DP */}
         <div
           onClick={() => onNavigate('piutang')}
-          className="p-6 rounded-3xl bg-white border border-slate-200/80 flex flex-col justify-between shadow-2xs cursor-pointer hover:border-slate-300 transition-colors min-h-[168px]"
+          className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white border border-slate-200/80 flex flex-col justify-between shadow-2xs cursor-pointer hover:border-slate-300 transition-colors min-h-[132px] sm:min-h-[168px]"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">
@@ -276,7 +276,7 @@ export const OperationalDashboard: React.FC<OperationalDashboardProps> = ({
         {/* Card 4: Pesanan Lunas & Cetak PDF Invoice */}
         <div
           onClick={() => onNavigate('invoice')}
-          className="p-6 rounded-3xl bg-white border border-slate-200/80 flex flex-col justify-between shadow-2xs cursor-pointer hover:border-slate-300 transition-colors min-h-[168px]"
+          className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white border border-slate-200/80 flex flex-col justify-between shadow-2xs cursor-pointer hover:border-slate-300 transition-colors min-h-[132px] sm:min-h-[168px]"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">
@@ -485,7 +485,7 @@ export const OperationalDashboard: React.FC<OperationalDashboardProps> = ({
                           disabled={updatingRowNumbers.includes(urgentDpOrder.rowNumber1Based)}
                           onChange={(e) => onUpdateStatus(urgentDpOrder, e.target.value)}
                           aria-label={`Ubah status ${urgentDpOrder.namaKlien}`}
-                          className="px-2 py-1 text-[11px] font-bold bg-white border border-amber-300 rounded-lg text-slate-900 focus:outline-none focus:border-emerald-700 cursor-pointer"
+                          className="min-h-[40px] px-2.5 py-1.5 text-xs sm:text-[11px] font-bold bg-white border border-amber-300 rounded-lg text-slate-900 focus:outline-none focus:border-emerald-700 cursor-pointer"
                         >
                           {Array.from(
                             new Set(
@@ -515,7 +515,7 @@ export const OperationalDashboard: React.FC<OperationalDashboardProps> = ({
               }
               onNavigate('invoice');
             }}
-            className="mt-5 w-full py-3 px-4 rounded-full bg-[#114232] hover:bg-[#0c3124] text-white text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            className="mt-5 w-full min-h-[44px] py-3 px-4 rounded-full bg-[#114232] hover:bg-[#0c3124] text-white text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <FileDown className="w-3.5 h-3.5" />
             <span>Buka & Unduh PDF Invoice</span>
@@ -653,7 +653,7 @@ export const OperationalDashboard: React.FC<OperationalDashboardProps> = ({
                               disabled={isUpdating}
                               onChange={(e) => onUpdateStatus(o, e.target.value)}
                               aria-label={`Ubah status ${o.namaKlien}`}
-                              className={`px-2 py-1 text-[11px] font-bold rounded-lg border cursor-pointer focus:outline-none focus:border-emerald-700 ${statusTone.bgClass} ${statusTone.borderClass} ${statusTone.textClass}`}
+                              className={`min-h-[38px] px-2.5 py-1.5 text-xs sm:text-[11px] font-bold rounded-lg border cursor-pointer focus:outline-none focus:border-emerald-700 ${statusTone.bgClass} ${statusTone.borderClass} ${statusTone.textClass}`}
                             >
                               {Array.from(
                                 new Set([...JOB_STATUS_OPTIONS, statusTone.label].filter(Boolean))

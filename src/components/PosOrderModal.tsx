@@ -62,6 +62,12 @@ function formatDateSerasa(dateObj: Date): string {
   return `${dateObj.getDate()} ${MONTHS_SHORT_ID[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
 }
 
+function addDaysFromToday(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return formatDateSerasa(d);
+}
+
 const QUICK_NOTE_CHIPS = [
   'Desain Custom',
   'AP210',
@@ -368,22 +374,22 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+        <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0 w-full sm:w-auto">
           {isInline && onClose && (
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors cursor-pointer"
+              className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Lihat Tracker Closing</span>
+              <span className="truncate">Tracker Closing</span>
             </button>
           )}
 
           <button
             type="button"
             onClick={handleResetForm}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-rose-700 bg-white hover:bg-rose-50 border border-slate-200 rounded-xl transition-colors cursor-pointer"
+            className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-rose-700 bg-white hover:bg-rose-50 border border-slate-200 rounded-xl transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset Form</span>
@@ -393,7 +399,7 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
               aria-label="Tutup form"
             >
               <X className="w-5 h-5" />
@@ -413,17 +419,17 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
           {/* LEFT 8 COLS: Step 1 (Pemesan), Step 2 (Item Order), Step 3 (Catatan) */}
           <div className="lg:col-span-8 space-y-5">
             {/* STEP 1: DATA PEMESAN & TANGGAL */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-4 shadow-2xs">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-[#114232] text-white text-xs font-extrabold flex items-center justify-center">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
+              <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-6 h-6 rounded-full bg-[#114232] text-white text-xs font-extrabold flex items-center justify-center shrink-0">
                     1
                   </span>
-                  <h3 className="text-sm font-extrabold text-slate-900">
-                    Data Pemesan & Tanggal Invoice
+                  <h3 className="text-sm font-extrabold text-slate-900 truncate">
+                    Data Pemesan &amp; Tanggal Invoice
                   </h3>
                 </div>
-                <span className="text-[11px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                <span className="text-[11px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg shrink-0">
                   {invoiceNo}
                 </span>
               </div>
@@ -443,7 +449,7 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                       value={namaKlien}
                       onChange={(e) => setNamaKlien(e.target.value)}
                       placeholder="Contoh: Wanda & Adrian"
-                      className="w-full pl-9 pr-3.5 py-2.5 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#114232]"
+                      className="w-full min-h-[46px] pl-10 pr-3.5 py-2.5 text-sm sm:text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#114232]"
                     />
                     <datalist id="serasa-existing-clients">
                       {existingClientNames.map((c) => (
@@ -461,20 +467,30 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                   <div className="relative">
                     <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
-                      type="text"
+                      type="tel"
+                      inputMode="tel"
                       value={noWa}
                       onChange={(e) => setNoWa(e.target.value)}
                       placeholder="081234567890"
-                      className="w-full pl-9 pr-3.5 py-2.5 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#114232]"
+                      className="w-full min-h-[46px] pl-10 pr-3.5 py-2.5 text-sm sm:text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#114232]"
                     />
                   </div>
                 </div>
 
                 {/* Tanggal Order */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Tanggal Order (Tgl. Order)
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-slate-700">
+                      Tanggal Order (Tgl. Order)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setTanggalLead(addDaysFromToday(0))}
+                      className="text-[11px] font-bold text-[#114232] hover:underline cursor-pointer"
+                    >
+                      Hari Ini
+                    </button>
+                  </div>
                   <div className="relative">
                     <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
@@ -482,7 +498,7 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                       value={tanggalLead}
                       onChange={(e) => setTanggalLead(e.target.value)}
                       placeholder="Contoh: 12 Nov 2026"
-                      className="w-full pl-9 pr-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#114232]"
+                      className="w-full min-h-[46px] pl-10 pr-3.5 py-2.5 text-sm sm:text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#114232]"
                     />
                   </div>
                 </div>
@@ -499,8 +515,33 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                       value={deadline}
                       onChange={(e) => setDeadline(e.target.value)}
                       placeholder="Contoh: 21 Nov 2026"
-                      className="w-full pl-9 pr-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#114232]"
+                      className="w-full min-h-[46px] pl-10 pr-3.5 py-2.5 text-sm sm:text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#114232]"
                     />
+                  </div>
+                  <div className="mt-2 grid grid-cols-4 gap-1.5">
+                    {[
+                      { days: 3, label: '+3 Hr' },
+                      { days: 7, label: '+7 Hr' },
+                      { days: 9, label: '+9 Hr' },
+                      { days: 14, label: '+14 Hr' },
+                    ].map((preset) => {
+                      const val = addDaysFromToday(preset.days);
+                      const isActive = deadline.trim() === val;
+                      return (
+                        <button
+                          key={preset.days}
+                          type="button"
+                          onClick={() => setDeadline(val)}
+                          className={`min-h-[34px] px-2 py-1 text-[11px] font-bold rounded-lg border transition-colors cursor-pointer ${
+                            isActive
+                              ? 'bg-[#114232] text-white border-[#114232]'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -510,42 +551,43 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAdvancedMeta((v) => !v)}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
+                  className="min-h-[42px] w-full sm:w-auto inline-flex items-center justify-between sm:justify-start gap-2 py-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
                 >
-                  <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>
-                     Pengaturan Tambahan (No. Invoice, Acara: {jenisAcara}, Channel:{' '}
-                    {channel})
+                  <span className="inline-flex items-center gap-1.5 text-left">
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                    <span>
+                      Pengaturan Tambahan ({jenisAcara} · {channel})
+                    </span>
                   </span>
                   {showAdvancedMeta ? (
-                    <ChevronUp className="w-3.5 h-3.5" />
+                    <ChevronUp className="w-4 h-4 shrink-0" />
                   ) : (
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <ChevronDown className="w-4 h-4 shrink-0" />
                   )}
                 </button>
 
                 {showAdvancedMeta && (
                   <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                      <label className="block text-xs sm:text-[11px] font-semibold text-slate-600 mb-1">
                         Nomor Invoice
                       </label>
                       <input
                         type="text"
                         value={invoiceNo}
                         onChange={(e) => setInvoiceNo(e.target.value)}
-                        className="w-full px-3 py-2 text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
+                        className="w-full min-h-[44px] px-3 py-2 text-sm sm:text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                      <label className="block text-xs sm:text-[11px] font-semibold text-slate-600 mb-1">
                         Jenis Acara
                       </label>
                       <select
                         value={jenisAcara}
                         onChange={(e) => setJenisAcara(e.target.value)}
-                        className="w-full px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
+                        className="w-full min-h-[44px] px-3 py-2 text-sm sm:text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
                       >
                         {['Wedding', 'Khitanan', 'Aqiqah', 'Tunangan', 'Lainnya'].map(
                           (ja) => (
@@ -558,7 +600,7 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                      <label className="block text-xs sm:text-[11px] font-semibold text-slate-600 mb-1">
                         Tanggal Acara
                       </label>
                       <input
@@ -566,18 +608,18 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                         value={tanggalAcara}
                         onChange={(e) => setTanggalAcara(e.target.value)}
                         placeholder="Opsional (27/12/2026)"
-                        className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
+                        className="w-full min-h-[44px] px-3 py-2 text-sm sm:text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                      <label className="block text-xs sm:text-[11px] font-semibold text-slate-600 mb-1">
                         Channel Order
                       </label>
                       <select
                         value={channel}
                         onChange={(e) => setChannel(e.target.value)}
-                        className="w-full px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
+                        className="w-full min-h-[44px] px-3 py-2 text-sm sm:text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
                       >
                         {['WhatsApp', 'Instagram', 'TikTok', 'Mitra', 'Lainnya'].map(
                           (ch) => (
@@ -590,13 +632,13 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                      <label className="block text-xs sm:text-[11px] font-semibold text-slate-600 mb-1">
                         Status Produksi
                       </label>
                       <select
                         value={statusOrder}
                         onChange={(e) => setStatusOrder(e.target.value)}
-                        className="w-full px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
+                        className="w-full min-h-[44px] px-3 py-2 text-sm sm:text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
                       >
                         {[
                           'Menunggu DP',
@@ -615,7 +657,7 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                      <label className="block text-xs sm:text-[11px] font-semibold text-slate-600 mb-1">
                         Kode Mitra (Opsional)
                       </label>
                       <input
@@ -623,7 +665,7 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                         value={kodeMitra}
                         onChange={(e) => setKodeMitra(e.target.value)}
                         placeholder="Kosongkan jika tanpa mitra"
-                        className="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
+                        className="w-full min-h-[44px] px-3 py-2 text-sm sm:text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl text-slate-900"
                       />
                     </div>
                   </div>
@@ -632,10 +674,10 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
             </div>
 
             {/* STEP 2: RINCIAN ITEM ORDER (NAMA ORDER, HARGA, QTY, JUMLAH) */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-4 shadow-2xs">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-[#114232] text-white text-xs font-extrabold flex items-center justify-center">
+                  <span className="w-6 h-6 rounded-full bg-[#114232] text-white text-xs font-extrabold flex items-center justify-center shrink-0">
                     2
                   </span>
                   <h3 className="text-sm font-extrabold text-slate-900">
@@ -645,7 +687,7 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleAddItem()}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-[#114232] bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors cursor-pointer"
+                  className="min-h-[42px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-[#114232] bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Tambah Baris Order</span>
@@ -655,10 +697,11 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
               <div className="space-y-4">
                 {items.map((it, idx) => {
                   const rowSubtotal = Math.max(0, it.qty * it.hargaPcs);
+                  const qtyStep = it.paket === 'Undangan Digital' ? 1 : 50;
                   return (
                     <div
                       key={it.id}
-                      className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/90 space-y-3.5"
+                      className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/80 border border-slate-200/90 space-y-3.5"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
@@ -668,7 +711,7 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                           <button
                             type="button"
                             onClick={() => handleRemoveItem(it.id)}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 cursor-pointer"
+                            className="min-h-[36px] px-2 inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             <span>Hapus</span>
@@ -676,8 +719,8 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                         )}
                       </div>
 
-                      {/* Quick Package Selector Pills */}
-                      <div className="flex flex-wrap gap-1.5">
+                      {/* Quick Package Selector */}
+                      <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-1.5">
                         {SERASA_CATALOG_PACKAGES.map((pkg) => {
                           const isSelected = it.paket === pkg.paket;
                           return (
@@ -687,7 +730,7 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                               onClick={() =>
                                 handleUpdateItem(it.id, { paket: pkg.paket })
                               }
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                              className={`min-h-[40px] px-3 py-2 rounded-xl text-xs font-bold text-left sm:text-center transition-colors cursor-pointer ${
                                 isSelected
                                   ? 'bg-[#114232] text-white shadow-2xs'
                                   : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -700,10 +743,10 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                       </div>
 
                       {/* Nama Order + Harga + Qty + Jumlah Grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-12 gap-3 items-end">
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
                         {/* Nama Order (Editable text so custom names work too) */}
-                        <div className="col-span-2 sm:col-span-4">
-                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                        <div className="sm:col-span-4">
+                          <label className="block text-xs sm:text-[11px] font-bold text-slate-600 mb-1">
                             Nama Order (Di Invoice)
                           </label>
                           <input
@@ -713,17 +756,18 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                               handleUpdateItem(it.id, { paket: e.target.value })
                             }
                             placeholder="Ketik nama paket / produk..."
-                            className="w-full px-3 py-2.5 text-xs sm:text-sm font-bold bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#114232]"
+                            className="w-full min-h-[46px] px-3 py-2.5 text-sm font-bold bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#114232]"
                           />
                         </div>
 
                         {/* Harga / pcs */}
-                        <div className="col-span-1 sm:col-span-3">
-                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                        <div className="sm:col-span-3">
+                          <label className="block text-xs sm:text-[11px] font-bold text-slate-600 mb-1">
                             Harga Satuan (Rp)
                           </label>
                           <input
                             type="number"
+                            inputMode="numeric"
                             min={0}
                             value={it.hargaPcs}
                             onChange={(e) =>
@@ -731,35 +775,65 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                                 hargaPcs: Math.max(0, Number(e.target.value) || 0),
                               })
                             }
-                            className="w-full px-3 py-2.5 text-xs sm:text-sm font-mono font-bold bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#114232] tabular-nums"
+                            className="w-full min-h-[46px] px-3 py-2.5 text-sm font-mono font-bold bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#114232] tabular-nums"
                           />
                         </div>
 
-                        {/* Qty (pcs) */}
-                        <div className="col-span-1 sm:col-span-2">
-                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                        {/* Qty (pcs) with tactile -/+ stepper */}
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs sm:text-[11px] font-bold text-slate-600 mb-1">
                             Qty (pcs)
                           </label>
-                          <input
-                            type="number"
-                            min={1}
-                            value={it.qty}
-                            onChange={(e) =>
-                              handleUpdateItem(it.id, {
-                                qty: Math.max(1, Number(e.target.value) || 1),
-                              })
-                            }
-                            className="w-full px-3 py-2.5 text-xs sm:text-sm font-mono font-bold text-center bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#114232] tabular-nums"
-                          />
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleUpdateItem(it.id, {
+                                  qty: Math.max(1, it.qty - qtyStep),
+                                })
+                              }
+                              aria-label="Kurangi jumlah"
+                              className="sm:hidden min-w-[44px] min-h-[46px] flex items-center justify-center rounded-xl bg-white border border-slate-200 font-extrabold text-slate-700 active:bg-slate-100"
+                            >
+                              -{qtyStep}
+                            </button>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              min={1}
+                              value={it.qty}
+                              onChange={(e) =>
+                                handleUpdateItem(it.id, {
+                                  qty: Math.max(1, Number(e.target.value) || 1),
+                                })
+                              }
+                              className="w-full min-h-[46px] px-2.5 py-2.5 text-sm font-mono font-bold text-center bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#114232] tabular-nums"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleUpdateItem(it.id, {
+                                  qty: it.qty + qtyStep,
+                                })
+                              }
+                              aria-label="Tambah jumlah"
+                              className="sm:hidden min-w-[44px] min-h-[46px] flex items-center justify-center rounded-xl bg-white border border-slate-200 font-extrabold text-[#114232] active:bg-emerald-50"
+                            >
+                              +{qtyStep}
+                            </button>
+                          </div>
                         </div>
 
                         {/* Jumlah Subtotal */}
-                        <div className="col-span-2 sm:col-span-3">
-                          <label className="block text-[11px] font-bold text-slate-600 mb-1 sm:text-right">
+                        <div className="sm:col-span-3">
+                          <label className="block text-xs sm:text-[11px] font-bold text-slate-600 mb-1 sm:text-right">
                             Jumlah
                           </label>
-                          <div className="px-3 py-2.5 text-xs sm:text-sm font-mono font-extrabold text-slate-900 bg-emerald-50/70 border border-emerald-200/80 rounded-xl sm:text-right tabular-nums whitespace-nowrap">
-                            {formatRupiah(rowSubtotal)}
+                          <div className="min-h-[46px] flex items-center justify-between sm:justify-end px-3 py-2.5 text-sm font-mono font-extrabold text-slate-900 bg-emerald-50/70 border border-emerald-200/80 rounded-xl tabular-nums whitespace-nowrap">
+                            <span className="text-xs font-sans font-semibold text-emerald-800 sm:hidden">
+                              Subtotal Item:
+                            </span>
+                            <span>{formatRupiah(rowSubtotal)}</span>
                           </div>
                         </div>
                       </div>
@@ -770,21 +844,23 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
             </div>
 
             {/* STEP 3: CATATAN INVOICE (MUNCUL DI KOTAK CATATAN PDF) */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-3 shadow-2xs">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-[#114232] text-white text-xs font-extrabold flex items-center justify-center">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3 shadow-2xs">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-6 h-6 rounded-full bg-[#114232] text-white text-xs font-extrabold flex items-center justify-center shrink-0">
                     3
                   </span>
                   <h3 className="text-sm font-extrabold text-slate-900">
-                    Catatan Pesanan (Tampil di Kotak Catatan Invoice)
+                    Catatan Pesanan (Kotak Catatan Invoice)
                   </h3>
                 </div>
-                <span className="text-[11px] text-slate-400">Kolom T Sheet</span>
+                <span className="text-[11px] text-slate-400 shrink-0 hidden sm:inline">
+                  Kolom T Sheet
+                </span>
               </div>
 
               {/* 1-Click Spec Chips */}
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {QUICK_NOTE_CHIPS.map((chip) => {
                   const isActive = catatanUmum
                     .toLowerCase()
@@ -794,10 +870,10 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                       key={chip}
                       type="button"
                       onClick={() => handleToggleNoteChip(chip)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer ${
+                      className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                         isActive
                           ? 'bg-emerald-100 text-emerald-950 border border-emerald-300'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                       }`}
                     >
                       {isActive ? `✓ ${chip}` : `+ ${chip}`}
@@ -811,7 +887,7 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                 value={catatanUmum}
                 onChange={(e) => setCatatanUmum(e.target.value)}
                 placeholder="Contoh: Desain Custom, AP210, Lipat, Stiker Segel"
-                className="w-full px-3.5 py-2.5 text-xs font-bold italic bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#114232]"
+                className="w-full min-h-[46px] px-3.5 py-2.5 text-sm sm:text-xs font-bold italic bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#114232]"
               />
             </div>
           </div>
@@ -832,7 +908,7 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                 </div>
               </div>
 
-              <div className="p-5 space-y-4 text-xs">
+              <div className="p-4 sm:p-5 space-y-4 text-xs">
                 {/* Sub Total */}
                 <div className="flex items-center justify-between text-slate-600">
                   <span className="font-semibold">Sub Total</span>
@@ -844,31 +920,33 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                 {/* Diskon & Ongkir Side by Side */}
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                    <label className="block text-xs sm:text-[11px] font-semibold text-slate-600 mb-1">
                       Potongan Diskon (Rp)
                     </label>
                     <input
                       type="number"
+                      inputMode="numeric"
                       min={0}
                       value={extraDiscount}
                       onChange={(e) =>
                         setExtraDiscount(Math.max(0, Number(e.target.value) || 0))
                       }
-                      className="w-full px-3 py-2 text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 tabular-nums"
+                      className="w-full min-h-[46px] px-3 py-2 text-sm sm:text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 tabular-nums"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                    <label className="block text-xs sm:text-[11px] font-semibold text-slate-600 mb-1">
                       Ongkos Kirim (Rp)
                     </label>
                     <input
                       type="number"
+                      inputMode="numeric"
                       min={0}
                       value={ongkir}
                       onChange={(e) =>
                         setOngkir(Math.max(0, Number(e.target.value) || 0))
                       }
-                      className="w-full px-3 py-2 text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 tabular-nums"
+                      className="w-full min-h-[46px] px-3 py-2 text-sm sm:text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 tabular-nums"
                     />
                   </div>
                 </div>
@@ -886,13 +964,13 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                         setUangDiterima('0');
                         setStatusOrder('Menunggu DP');
                       }}
-                      className={`py-2 px-2 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
+                      className={`min-h-[44px] py-2 px-1.5 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
                         paymentMode === 'belum_bayar'
                           ? 'bg-[#114232] text-white shadow-2xs'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
-                      Belum Bayar (Rp 0)
+                      Belum Bayar
                     </button>
 
                     <button
@@ -902,7 +980,7 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                         setUangDiterima(String(Math.round(grandTotal * 0.5)));
                         setStatusOrder('Desain');
                       }}
-                      className={`py-2 px-2 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
+                      className={`min-h-[44px] py-2 px-1.5 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
                         paymentMode === 'dp'
                           ? 'bg-[#114232] text-white shadow-2xs'
                           : 'text-slate-600 hover:text-slate-900'
@@ -918,7 +996,7 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                         setUangDiterima(String(grandTotal));
                         setStatusOrder('Desain');
                       }}
-                      className={`py-2 px-2 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
+                      className={`min-h-[44px] py-2 px-1.5 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
                         paymentMode === 'lunas'
                           ? 'bg-[#114232] text-white shadow-2xs'
                           : 'text-slate-600 hover:text-slate-900'
@@ -932,7 +1010,7 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                 {/* Nominal Bayar & Metode Bayar */}
                 {paymentMode === 'dp' && (
                   <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <label className="text-xs font-bold text-amber-950">
                         Nominal DP Diterima (Rp):
                       </label>
@@ -941,29 +1019,30 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                         onClick={() =>
                           setUangDiterima(String(Math.round(grandTotal * 0.5)))
                         }
-                        className="text-[11px] font-bold text-amber-800 underline cursor-pointer"
+                        className="text-xs font-bold text-amber-800 underline cursor-pointer"
                       >
                         Isi DP 50% ({formatRupiah(Math.round(grandTotal * 0.5))})
                       </button>
                     </div>
                     <input
                       type="number"
+                      inputMode="numeric"
                       min={0}
                       value={uangDiterima}
                       onChange={(e) => setUangDiterima(e.target.value)}
-                      className="w-full px-3 py-2 text-xs font-mono font-bold bg-white border border-amber-300 rounded-xl text-slate-900 tabular-nums"
+                      className="w-full min-h-[46px] px-3 py-2 text-sm sm:text-xs font-mono font-bold bg-white border border-amber-300 rounded-xl text-slate-900 tabular-nums"
                     />
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                  <label className="block text-xs sm:text-[11px] font-semibold text-slate-600 mb-1">
                     Metode Pembayaran
                   </label>
                   <select
                     value={metodeBayar}
                     onChange={(e) => setMetodeBayar(e.target.value)}
-                    className="w-full px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 cursor-pointer"
+                    className="w-full min-h-[46px] px-3 py-2 text-sm sm:text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 cursor-pointer"
                   >
                     <option value="Transfer">Transfer BCA (137 026 1136)</option>
                     <option value="Cash">Cash / Tunai</option>
@@ -1000,10 +1079,10 @@ export const PosOrderModal: React.FC<PosOrderModalProps> = ({
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  className="w-full py-3.5 px-4 rounded-xl bg-[#114232] hover:bg-[#0d3326] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
+                  className="w-full min-h-[52px] py-3.5 px-4 rounded-xl bg-[#114232] hover:bg-[#0d3326] text-white font-bold text-sm sm:text-xs flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Simpan ke Sheet & Buka PDF Invoice</span>
+                  <span>Simpan ke Sheet &amp; Buka PDF Invoice</span>
                   <FileDown className="w-4 h-4 ml-0.5" />
                 </button>
               </div>

@@ -666,7 +666,7 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
         <button
           type="button"
           onClick={() => setShowSchemaEditor((v) => !v)}
-          className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl border transition-colors whitespace-nowrap shrink-0 self-start md:self-auto cursor-pointer ${
+          className={`w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
             showSchemaEditor
               ? 'bg-[#114232] text-white border-[#114232]'
               : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
@@ -794,12 +794,12 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
         </div>
       )}
 
-      {/* 4 Summary & Filter Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      {/* 4 Summary & Filter Cards (Balanced 2-col on mobile, 4-col on lg) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
         <button
           type="button"
           onClick={() => setCategoryFilter('actionable')}
-          className={`text-left p-4 rounded-2xl border transition-colors cursor-pointer ${
+          className={`col-span-2 lg:col-span-1 text-left p-3.5 sm:p-4 rounded-2xl border transition-colors cursor-pointer ${
             categoryFilter === 'actionable'
               ? 'bg-[#114232] text-white border-[#114232]'
               : 'bg-white text-slate-900 border-slate-200/90 hover:border-slate-300'
@@ -819,11 +819,11 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
               }`}
             />
           </div>
-          <div className="mt-2 text-2xl font-extrabold font-mono tabular-nums">
+          <div className="mt-1.5 sm:mt-2 text-2xl font-extrabold font-mono tabular-nums">
             {stats.actionableCount}
           </div>
           <div
-            className={`mt-1 text-xs ${
+            className={`mt-0.5 sm:mt-1 text-xs ${
               categoryFilter === 'actionable' ? 'text-emerald-100/80' : 'text-slate-500'
             }`}
           >
@@ -834,52 +834,52 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
         <button
           type="button"
           onClick={() => setCategoryFilter('belum_dp')}
-          className={`text-left p-4 rounded-2xl border transition-colors cursor-pointer ${
+          className={`text-left p-3.5 sm:p-4 rounded-2xl border transition-colors cursor-pointer ${
             categoryFilter === 'belum_dp'
               ? 'bg-rose-50 border-rose-400'
               : 'bg-white border-slate-200/90 hover:border-slate-300'
           }`}
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-rose-800">
-              Belum DP (Belum Dikerjakan)
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs font-semibold text-rose-800 truncate">
+              Belum DP
             </span>
-            <Clock className="w-4 h-4 text-rose-600" />
+            <Clock className="w-4 h-4 text-rose-600 shrink-0" />
           </div>
-          <div className="mt-2 text-2xl font-extrabold text-slate-900 font-mono tabular-nums">
+          <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl font-extrabold text-slate-900 font-mono tabular-nums">
             {stats.belumDpCount}
           </div>
-          <div className="mt-1 text-xs font-mono tabular-nums text-rose-700">
-            Tertahan {formatRupiah(stats.belumDpAmount)}
+          <div className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs font-mono tabular-nums text-rose-700 truncate">
+            {formatRupiah(stats.belumDpAmount)}
           </div>
         </button>
 
         <button
           type="button"
           onClick={() => setCategoryFilter('pelunasan')}
-          className={`text-left p-4 rounded-2xl border transition-colors cursor-pointer ${
+          className={`text-left p-3.5 sm:p-4 rounded-2xl border transition-colors cursor-pointer ${
             categoryFilter === 'pelunasan'
               ? 'bg-amber-50 border-amber-400'
               : 'bg-white border-slate-200/90 hover:border-slate-300'
           }`}
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-800">Tagih Pelunasan</span>
-            <Wallet className="w-4 h-4 text-amber-600" />
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-xs font-semibold text-amber-800 truncate">Pelunasan</span>
+            <Wallet className="w-4 h-4 text-amber-600 shrink-0" />
           </div>
-          <div className="mt-2 text-2xl font-extrabold text-slate-900 font-mono tabular-nums">
+          <div className="mt-1.5 sm:mt-2 text-xl sm:text-2xl font-extrabold text-slate-900 font-mono tabular-nums">
             {stats.pelunasanCount}
           </div>
-          <div className="mt-1 text-xs font-mono tabular-nums text-amber-700">
-            Sisa DP {formatRupiah(stats.pelunasanAmount)}
+          <div className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs font-mono tabular-nums text-amber-700 truncate">
+            {formatRupiah(stats.pelunasanAmount)}
           </div>
         </button>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="col-span-2 lg:col-span-1 grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => setCategoryFilter('follow_up')}
-            className={`text-left p-3.5 rounded-2xl border transition-colors cursor-pointer flex flex-col justify-between ${
+            className={`text-left p-3 sm:p-3.5 rounded-2xl border transition-colors cursor-pointer flex flex-col justify-between ${
               categoryFilter === 'follow_up'
                 ? 'bg-sky-50 border-sky-400'
                 : 'bg-white border-slate-200/90 hover:border-slate-300'
@@ -895,7 +895,7 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
           <button
             type="button"
             onClick={() => setCategoryFilter('after_sales')}
-            className={`text-left p-3.5 rounded-2xl border transition-colors cursor-pointer flex flex-col justify-between ${
+            className={`text-left p-3 sm:p-3.5 rounded-2xl border transition-colors cursor-pointer flex flex-col justify-between ${
               categoryFilter === 'after_sales'
                 ? 'bg-emerald-50 border-emerald-400'
                 : 'bg-white border-slate-200/90 hover:border-slate-300'
@@ -912,15 +912,15 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
 
       {/* Main Queue: Clean Full-Width List (1 Card per Invoice) */}
       <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-sm">
+        <div className="p-3.5 sm:p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+          <div className="relative flex-1 sm:max-w-sm">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari nama klien, invoice, atau paket..."
-              className="w-full pl-9 pr-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-emerald-700"
+              className="w-full min-h-[44px] sm:min-h-0 pl-9 pr-3.5 py-2 text-sm sm:text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-emerald-700"
             />
           </div>
           <div className="text-xs text-slate-500 font-mono tabular-nums">
@@ -939,7 +939,7 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 max-h-[68vh] overflow-y-auto">
+          <div className="divide-y divide-slate-100 lg:max-h-[68vh] lg:overflow-y-auto">
             {visibleItems.map((item) => {
               const { group, category, meta, deadlineInfo, phone, log } = item;
               const isSelected = selectedGroupKey === group.groupKey;
@@ -1062,13 +1062,13 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
                     </div>
 
                     {/* Action Buttons: Opens 3-Option Human Message Chooser */}
-                    <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto pt-1 sm:pt-0">
                       <button
                         type="button"
                         onClick={() => openChooserModal(group.groupKey)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-xl transition-colors whitespace-nowrap cursor-pointer"
+                        className="flex-1 sm:flex-none min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-xl transition-colors whitespace-nowrap cursor-pointer"
                       >
-                        <MessageCircle className="w-3.5 h-3.5" />
+                        <MessageCircle className="w-4 h-4" />
                         <span>Pilih Pesan / Kirim WA</span>
                       </button>
 
@@ -1081,9 +1081,9 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
                               group.primaryOrder.rawValues
                             )
                           }
-                          className="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl transition-colors whitespace-nowrap cursor-pointer"
+                          className="min-h-[44px] inline-flex items-center justify-center gap-1 px-3 py-2 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl transition-colors whitespace-nowrap cursor-pointer"
                         >
-                          <Edit3 className="w-3.5 h-3.5" />
+                          <Edit3 className="w-4 h-4" />
                           <span>Isi No. WA</span>
                         </button>
                       )}
@@ -1093,9 +1093,9 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
                           type="button"
                           onClick={() => markAsFollowedUp(group.groupKey, category)}
                           title="Tandai sudah di-follow up"
-                          className="p-2 text-slate-500 hover:text-emerald-800 bg-slate-50 hover:bg-emerald-50 border border-slate-200 rounded-xl transition-colors cursor-pointer"
+                          className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-slate-500 hover:text-emerald-800 bg-slate-50 hover:bg-emerald-50 border border-slate-200 rounded-xl transition-colors cursor-pointer"
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <CheckCircle2 className="w-4 h-4" />
                         </button>
                       )}
 
@@ -1104,9 +1104,9 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
                           type="button"
                           onClick={() => onOpenInvoice(group.invoiceNo)}
                           title="Buka PDF Invoice untuk dikirim ke WhatsApp"
-                          className="p-2 text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors cursor-pointer"
+                          className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors cursor-pointer"
                         >
-                          <FileDown className="w-3.5 h-3.5" />
+                          <FileDown className="w-4 h-4" />
                         </button>
                       )}
                     </div>
@@ -1118,17 +1118,20 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
         )}
       </div>
 
-      {/* Centered Multi-Option Message Picker & Custom Editor Modal */}
+      {/* Centered / Bottom-Sheet Multi-Option Message Picker & Custom Editor Modal */}
       {activeDraftItem && (
         <div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-3 sm:p-5"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-xs p-0 sm:p-5"
           role="dialog"
           aria-modal="true"
           aria-labelledby="wa-chooser-title"
         >
-          <div className="w-full max-w-3xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+          <div className="w-full max-w-3xl bg-white border border-slate-200 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh]">
+            {/* Mobile Drag Handle */}
+            <div className="sm:hidden w-10 h-1 rounded-full bg-slate-300 mx-auto mt-2.5 shrink-0" />
+
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-slate-100 flex items-start justify-between gap-4 bg-white shrink-0">
+            <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 flex items-start justify-between gap-3 bg-white shrink-0">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-xs font-bold">
                   <span
@@ -1145,7 +1148,7 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
                 >
                   Pilih Gaya Pesan ke {activeDraftItem.group.namaKlien}
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5 truncate">
                   {activeDraftItem.group.paketSummary} ·{' '}
                   <span className="font-mono tabular-nums">
                     {activeDraftItem.phone.display || 'Nomor WA belum diisi'}
@@ -1158,10 +1161,10 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
                   setSelectedGroupKey(null);
                   setEditingCustomTone(null);
                 }}
-                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer shrink-0"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer shrink-0"
                 aria-label="Tutup pilihan pesan"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -1218,9 +1221,9 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
             </div>
 
             {/* Body: 3 Natural Human Options + Optional Manual Editor */}
-            <div className="p-5 sm:p-6 overflow-y-auto space-y-4 bg-[#F8FAF9] flex-1">
+            <div className="p-4 sm:p-6 pb-safe overflow-y-auto space-y-4 bg-[#F8FAF9] flex-1">
               <p className="text-xs text-slate-500">
-                Pilih gaya kalimat yang paling pas dengan karakter customer agar terasa seperti chat biasa (bukan template otomatis):
+                Pilih gaya kalimat yang paling pas dengan karakter customer agar terasa seperti chat biasa:
               </p>
 
               <div className="space-y-3">
@@ -1237,13 +1240,13 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
                   return (
                     <div
                       key={tone.key}
-                      className={`bg-white border rounded-2xl p-4 space-y-3 transition-colors ${
+                      className={`bg-white border rounded-2xl p-3.5 sm:p-4 space-y-3 transition-colors ${
                         isEditingThis
                           ? 'border-[#114232] ring-2 ring-[#114232]/10'
                           : 'border-slate-200/90'
                       }`}
                     >
-                      <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
                         <div>
                           <div className="text-xs font-extrabold text-slate-900">
                             {tone.label}
@@ -1251,7 +1254,7 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
                           <div className="text-[11px] text-slate-500">{tone.hint}</div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-1.5">
+                        <div className="grid grid-cols-3 sm:flex items-center gap-1.5 w-full sm:w-auto">
                           <button
                             type="button"
                             onClick={() => {
@@ -1262,13 +1265,13 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
                                 setCustomDraftMessage(rendered);
                               }
                             }}
-                            className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${
+                            className={`min-h-[40px] px-2.5 py-1.5 text-xs font-semibold rounded-xl sm:rounded-lg border transition-colors cursor-pointer truncate ${
                               isEditingThis
                                 ? 'bg-slate-800 text-white border-slate-800'
                                 : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                             }`}
                           >
-                            {isEditingThis ? 'Selesai Edit' : 'Ubah Kalimat'}
+                            {isEditingThis ? 'Selesai' : 'Ubah'}
                           </button>
 
                           <button
@@ -1279,12 +1282,12 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
                                 isEditingThis ? customDraftMessage : rendered
                               )
                             }
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+                            className="min-h-[40px] inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl sm:rounded-lg transition-colors cursor-pointer"
                           >
                             {isCopied ? (
                               <>
                                 <Check className="w-3.5 h-3.5 text-emerald-700" />
-                                <span className="text-emerald-800">Tersalin</span>
+                                <span className="text-emerald-800">Disalin</span>
                               </>
                             ) : (
                               <>
@@ -1308,7 +1311,7 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
                                   activeDraftItem.category
                                 )
                               }
-                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-lg transition-colors cursor-pointer"
+                              className="min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-xl sm:rounded-lg transition-colors cursor-pointer"
                             >
                               <Send className="w-3.5 h-3.5" />
                               <span>Kirim WA</span>
@@ -1323,10 +1326,10 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
                                   activeDraftItem.group.primaryOrder.rawValues
                                 );
                               }}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 rounded-lg cursor-pointer"
+                              className="min-h-[40px] inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 rounded-xl sm:rounded-lg cursor-pointer"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
-                              <span>Isi No. WA</span>
+                              <span>Isi WA</span>
                             </button>
                           )}
                         </div>
@@ -1337,10 +1340,10 @@ export const CustomerRemindersView: React.FC<CustomerRemindersViewProps> = ({
                           rows={5}
                           value={customDraftMessage}
                           onChange={(e) => setCustomDraftMessage(e.target.value)}
-                          className="w-full p-3 text-xs sm:text-sm leading-relaxed bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#114232]"
+                          className="w-full p-3 text-sm leading-relaxed bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#114232]"
                         />
                       ) : (
-                        <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                        <p className="text-sm sm:text-xs text-slate-700 leading-relaxed whitespace-pre-line">
                           {rendered}
                         </p>
                       )}

@@ -668,9 +668,29 @@ export const InvoiceStudio: React.FC<InvoiceStudioProps> = ({
     : '';
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[calc(100vh-7.5rem)] lg:overflow-hidden print:block print:h-auto print:overflow-visible">
-      {/* Left 4 Cols: Independently Scrollable Invoice Selector List */}
-      <div className="lg:col-span-4 bg-white border border-slate-200/90 rounded-3xl overflow-hidden shadow-2xs flex flex-col max-h-[420px] lg:max-h-none lg:h-full print:hidden">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:h-[calc(100vh-7.5rem)] lg:overflow-hidden print:block print:h-auto print:overflow-visible">
+      {/* Mobile Compact Faktur Selector Card (< lg) */}
+      <div className="lg:hidden bg-white border border-slate-200/90 rounded-2xl p-3.5 space-y-2 shadow-2xs print:hidden">
+        <label className="flex items-center justify-between text-xs font-extrabold text-slate-800">
+          <span>Pilih Faktur / Invoice ({invoiceGroups.length})</span>
+          <span className="text-[11px] font-normal text-slate-400">Tap untuk ganti</span>
+        </label>
+        <select
+          value={activeInvoice.invoiceNo}
+          onChange={(e) => onSelectInvoiceNo(e.target.value)}
+          aria-label="Pilih nomor invoice"
+          className="w-full min-h-[46px] px-3 py-2 text-sm font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-[#114232]"
+        >
+          {invoiceGroups.map((grp) => (
+            <option key={grp.invoiceNo} value={grp.invoiceNo}>
+              {grp.namaKlien} — {grp.invoiceNo} ({grp.sisa <= 0 ? 'LUNAS' : `Sisa ${formatRpInvoice(grp.sisa)}`})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Desktop Left 4 Cols: Independently Scrollable Invoice Selector List */}
+      <div className="hidden lg:flex lg:col-span-4 bg-white border border-slate-200/90 rounded-3xl overflow-hidden shadow-2xs flex-col lg:h-full print:hidden">
         <div className="shrink-0 p-4 border-b border-slate-200 space-y-3 bg-white">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-extrabold text-slate-900">
@@ -737,13 +757,13 @@ export const InvoiceStudio: React.FC<InvoiceStudioProps> = ({
       {/* Right 8 Cols: Pinned Action Bar + Independently Scrollable Invoice Paper */}
       <div className="lg:col-span-8 flex flex-col gap-4 lg:h-full lg:overflow-hidden print:block">
         {/* Pinned Action Bar with Automatic Filename Preview */}
-        <div className="shrink-0 bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs print:hidden">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="shrink-0 bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-4 shadow-2xs print:hidden">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
               <FileText className="w-4 h-4 text-[#114232] shrink-0" />
               <div className="min-w-0">
                 <div className="text-[11px] text-slate-400">
-                  Nama File PDF Otomatis (Nama Pemesan - Tanggal Order - Nomor Invoice):
+                  Nama File PDF Otomatis:
                 </div>
                 <div className="text-xs font-mono font-bold text-slate-900 truncate">
                   {pdfFilename}
@@ -751,14 +771,14 @@ export const InvoiceStudio: React.FC<InvoiceStudioProps> = ({
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
               {activeInvoice.sisa > 0 &&
                 onQuickMarkPaidAndDone &&
                 activeInvoice.items.length === 1 && (
                   <button
                     type="button"
                     onClick={() => onQuickMarkPaidAndDone(activeInvoice.items[0])}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-900 bg-emerald-100 hover:bg-emerald-200 rounded-xl transition-colors cursor-pointer"
+                    className="min-h-[44px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-900 bg-emerald-100 hover:bg-emerald-200 rounded-xl transition-colors cursor-pointer"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Tandai Lunas</span>
@@ -768,7 +788,7 @@ export const InvoiceStudio: React.FC<InvoiceStudioProps> = ({
               <button
                 type="button"
                 onClick={handleCopyWa}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+                className="min-h-[44px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
               >
                 {copiedWa ? (
                   <>
@@ -788,7 +808,7 @@ export const InvoiceStudio: React.FC<InvoiceStudioProps> = ({
                   href={waUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors"
+                  className="min-h-[44px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
                   <span>Kirim WA</span>
@@ -798,7 +818,7 @@ export const InvoiceStudio: React.FC<InvoiceStudioProps> = ({
               <button
                 type="button"
                 onClick={handleWindowPrint}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer"
+                className="min-h-[44px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print</span>
@@ -807,20 +827,20 @@ export const InvoiceStudio: React.FC<InvoiceStudioProps> = ({
               <button
                 type="button"
                 onClick={handleDownloadPdf}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#114232] hover:bg-[#0d3326] rounded-xl shadow-xs transition-colors cursor-pointer"
+                className="col-span-2 sm:col-span-1 min-h-[46px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#114232] hover:bg-[#0d3326] rounded-xl shadow-xs transition-colors cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                 <span>Unduh PDF Invoice</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Independently Scrollable Paper Viewport */}
-        <div className="flex-1 overflow-y-auto pb-8 pr-0.5 print:overflow-visible print:pb-0">
+        {/* Independently Scrollable Paper Viewport (Horizontal scroll safe on small screens) */}
+        <div className="flex-1 overflow-x-auto lg:overflow-y-auto pb-8 pr-0.5 print:overflow-visible print:pb-0">
           {/* Exact 1:1 Paper Preview Matching Wanda & Adrian Serasa Salam Invoice PDF */}
           <div
-            className="bg-white border border-slate-200/90 rounded-sm shadow-sm mx-auto max-w-[794px] p-8 sm:p-14 text-black print:shadow-none print:border-none print:p-0"
+            className="bg-white border border-slate-200/90 rounded-sm shadow-sm mx-auto min-w-[640px] sm:min-w-0 max-w-[794px] p-8 sm:p-14 text-black print:shadow-none print:border-none print:p-0 print:min-w-0"
             style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
           >
             {/* 1. Top Row: INVOICE (Left) & Serasa Salam Undangan Lembang Logo (Right) */}

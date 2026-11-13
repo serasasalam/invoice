@@ -97,21 +97,24 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
   const currentStatus = (values[17] || '').trim() || 'Menunggu DP';
 
   const inputClass =
-    'w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#114232] focus:ring-2 focus:ring-[#114232]/10 transition-colors';
+    'w-full min-h-[46px] px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#114232] focus:ring-2 focus:ring-[#114232]/10 transition-colors';
   const monoInputClass = `${inputClass} font-mono tabular-nums`;
   const selectClass = `${inputClass} cursor-pointer`;
   const labelClass = 'block text-xs font-semibold text-slate-600 mb-1.5';
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-3 sm:p-5"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-xs p-0 sm:p-5"
       role="dialog"
       aria-modal="true"
       aria-labelledby="row-editor-title"
     >
-      <div className="w-full max-w-3xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="w-full max-w-3xl bg-white border border-slate-200 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh]">
+        {/* Mobile Drag Handle */}
+        <div className="sm:hidden w-10 h-1 rounded-full bg-slate-300 mx-auto mt-2.5 mb-0.5 shrink-0" />
+
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 px-6 py-4 border-b border-slate-100 bg-white shrink-0">
+        <div className="flex items-start justify-between gap-3 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-white shrink-0">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3
@@ -141,10 +144,10 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer shrink-0"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer shrink-0"
             aria-label="Tutup modal edit"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -163,7 +166,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
                       Aktif: {currentStatus}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-1.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 sm:gap-1.5">
                     {statusChoices.map((stage) => {
                       const isActive =
                         currentStatus.toLowerCase() === stage.toLowerCase();
@@ -172,7 +175,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
                           key={stage}
                           type="button"
                           onClick={() => setField(17, stage)}
-                          className={`px-2.5 py-2 text-xs font-semibold rounded-xl border text-center transition-colors cursor-pointer ${
+                          className={`min-h-[42px] px-2.5 py-2 text-xs font-semibold rounded-xl border text-center transition-colors cursor-pointer ${
                             isActive
                               ? 'bg-[#114232] text-white border-[#114232] shadow-2xs'
                               : 'bg-slate-50/70 text-slate-700 border-slate-200 hover:border-emerald-700 hover:bg-white'
@@ -210,6 +213,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
                       <label className={labelClass}>No. WhatsApp</label>
                       <input
                         type="tel"
+                        inputMode="tel"
                         value={values[3] || ''}
                         onChange={(e) => setField(3, e.target.value)}
                         placeholder="Contoh: 081234567890"
@@ -339,6 +343,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
                       <label className={labelClass}>Qty (Pcs)</label>
                       <input
                         type="number"
+                        inputMode="numeric"
                         min="0"
                         value={values[8] || ''}
                         onChange={(e) => setField(8, e.target.value)}
@@ -350,6 +355,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
                       <label className={labelClass}>Harga / Pcs (Rp)</label>
                       <input
                         type="number"
+                        inputMode="numeric"
                         min="0"
                         value={values[9] || ''}
                         onChange={(e) => setField(9, e.target.value)}
@@ -361,6 +367,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
                       <label className={labelClass}>Diskon (Rp)</label>
                       <input
                         type="number"
+                        inputMode="numeric"
                         min="0"
                         value={values[11] || ''}
                         onChange={(e) => setField(11, e.target.value)}
@@ -373,6 +380,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
                       <label className={labelClass}>Ongkir / Tambahan (Rp)</label>
                       <input
                         type="number"
+                        inputMode="numeric"
                         min="0"
                         value={values[12] || ''}
                         onChange={(e) => setField(12, e.target.value)}
@@ -436,6 +444,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
                       </div>
                       <input
                         type="number"
+                        inputMode="numeric"
                         min="0"
                         value={values[14] || ''}
                         onChange={(e) => setField(14, e.target.value)}
@@ -530,24 +539,24 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
           </div>
 
           {/* Clean Sticky Footer */}
-          <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-t border-slate-100 bg-white shrink-0">
-            <span className="text-[11px] text-slate-400">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-4 sm:px-6 py-3.5 sm:py-4 pb-safe border-t border-slate-100 bg-white shrink-0">
+            <span className="hidden sm:inline text-[11px] text-slate-400">
               Kolom rumus otomatis Google Sheet tetap terjaga.
             </span>
-            <div className="flex items-center gap-2.5 ml-auto">
+            <div className="grid grid-cols-2 sm:flex items-center gap-2.5 sm:ml-auto w-full sm:w-auto">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+                className="min-h-[46px] px-4 py-2.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
               >
                 Batal
               </button>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-xl shadow-xs transition-colors cursor-pointer"
+                className="min-h-[46px] inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-xl shadow-xs transition-colors cursor-pointer"
               >
                 <Save className="w-3.5 h-3.5" />
-                <span>Simpan Perubahan</span>
+                <span>Simpan</span>
               </button>
             </div>
           </div>

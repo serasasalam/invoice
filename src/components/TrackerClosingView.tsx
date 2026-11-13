@@ -216,7 +216,7 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
         </div>
 
         <div
-          className="inline-flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-xl shrink-0 self-start md:self-auto"
+          className="grid grid-cols-3 md:inline-flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-xl shrink-0 w-full md:w-auto"
           role="tablist"
           aria-label="Mode tampilan Tracker Closing"
         >
@@ -225,39 +225,39 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
             role="tab"
             aria-selected={activeTab === 'list'}
             onClick={() => setActiveTab('list')}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+            className={`min-h-[42px] px-2 sm:px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap truncate cursor-pointer ${
               activeTab === 'list'
                 ? 'bg-[#114232] text-white'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
-            Daftar Order ({parsedOrders.length})
+            Order ({parsedOrders.length})
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'entry'}
             onClick={() => setActiveTab('entry')}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+            className={`min-h-[42px] px-2 sm:px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap truncate cursor-pointer ${
               activeTab === 'entry'
                 ? 'bg-[#114232] text-white'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
-            + Input Penjualan
+            + Input Baru
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'summary'}
             onClick={() => setActiveTab('summary')}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+            className={`min-h-[42px] px-2 sm:px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap truncate cursor-pointer ${
               activeTab === 'summary'
                 ? 'bg-[#114232] text-white'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
-            Ringkasan Omzet
+            Omzet
           </button>
         </div>
       </div>
@@ -340,26 +340,26 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
           {/* Main Table Card */}
           <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden">
             {/* Unified Filter & Search Toolbar */}
-            <div className="p-4 border-b border-slate-100 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+            <div className="p-3.5 sm:p-4 border-b border-slate-100 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
               {/* Left: Search + Payment Status Filter */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1 min-w-0">
-                <div className="relative flex-1 max-w-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+                <div className="relative flex-1 sm:max-w-sm">
                   <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Cari nama klien, no. invoice, paket..."
-                    className="w-full pl-9 pr-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-emerald-700"
+                    className="w-full min-h-[44px] sm:min-h-0 pl-9 pr-3.5 py-2 text-sm sm:text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-emerald-700"
                   />
                 </div>
 
                 {/* Payment Segmented Filter */}
-                <div className="inline-flex items-center gap-1 p-1 bg-slate-100 rounded-xl self-start sm:self-auto shrink-0">
+                <div className="grid grid-cols-3 sm:inline-flex items-center gap-1 p-1 bg-slate-100 rounded-xl w-full sm:w-auto shrink-0">
                   <button
                     type="button"
                     onClick={() => setPaymentFilter('all')}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    className={`min-h-[40px] sm:min-h-0 px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap truncate cursor-pointer ${
                       paymentFilter === 'all'
                         ? 'bg-white text-slate-900 shadow-2xs'
                         : 'text-slate-600 hover:text-slate-900'
@@ -370,18 +370,18 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setPaymentFilter('unpaid')}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    className={`min-h-[40px] sm:min-h-0 px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap truncate cursor-pointer ${
                       paymentFilter === 'unpaid'
                         ? 'bg-white text-amber-800 shadow-2xs'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    Belum Lunas ({counts.unpaid})
+                    DP ({counts.unpaid})
                   </button>
                   <button
                     type="button"
                     onClick={() => setPaymentFilter('paid')}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    className={`min-h-[40px] sm:min-h-0 px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap truncate cursor-pointer ${
                       paymentFilter === 'paid'
                         ? 'bg-white text-emerald-800 shadow-2xs'
                         : 'text-slate-600 hover:text-slate-900'
@@ -393,12 +393,12 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
               </div>
 
               {/* Right: Status Filter + Paket Filter + Sort + View Density + Export */}
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 shrink-0">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   aria-label="Filter status pekerjaan"
-                  className="px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:bg-white focus:outline-none focus:border-emerald-700 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 w-full sm:w-auto px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:bg-white focus:outline-none focus:border-emerald-700 cursor-pointer"
                 >
                   <option value="all">Semua Status</option>
                   {statusChoices.map((st) => (
@@ -412,7 +412,7 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                   value={paketFilter}
                   onChange={(e) => setPaketFilter(e.target.value)}
                   aria-label="Filter paket undangan"
-                  className="px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:bg-white focus:outline-none focus:border-emerald-700 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 w-full sm:w-auto px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:bg-white focus:outline-none focus:border-emerald-700 cursor-pointer"
                 >
                   <option value="all">Semua Paket</option>
                   {uniquePackages.map((pkt) => (
@@ -426,7 +426,7 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
                   aria-label="Urutan baris"
-                  className="px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:bg-white focus:outline-none focus:border-emerald-700 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 w-full sm:w-auto px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:bg-white focus:outline-none focus:border-emerald-700 cursor-pointer"
                 >
                   <option value="newest">Terbaru di Atas</option>
                   <option value="oldest">Urutan Sheet (#1 &rarr; Akhir)</option>
@@ -464,10 +464,10 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                 <button
                   type="button"
                   onClick={handleDownloadCsv}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>CSV</span>
+                  <span>Unduh CSV</span>
                 </button>
               </div>
             </div>
@@ -917,12 +917,13 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                   </table>
                 </div>
 
-                {/* Mobile & Small Screen Card List (Clean Touch Targets >= 44px) */}
+                {/* Mobile & Small Screen Card List (Clean Touch Targets >= 44px + Expandable Details) */}
                 <div className="md:hidden divide-y divide-slate-100">
                   {filteredOrders.map((order) => {
                     const phone = formatDisplayPhone(order.noWa);
                     const isPaid = order.sisa <= 0;
                     const statusTone = getJobStatusTone(order.status, isPaid);
+                    const isExpanded = expandedRowNum === order.rowNumber1Based;
                     const isUpdatingStatus = updatingRowNumbers.includes(
                       order.rowNumber1Based
                     );
@@ -937,7 +938,7 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                             <div className="text-sm font-bold text-slate-900 truncate">
                               {order.namaKlien || 'Tanpa Nama Klien'}
                             </div>
-                            <div className="mt-0.5 text-xs text-slate-500 font-mono tabular-nums">
+                            <div className="mt-0.5 text-xs text-slate-500 font-mono tabular-nums truncate">
                               {order.invoiceNo || '—'} · {order.tanggalLead || '—'}
                             </div>
                           </div>
@@ -956,14 +957,19 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                         </div>
 
                         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
-                          <div>
+                          <div className="min-w-0">
                             <span className="font-semibold text-slate-800">{order.paket}</span>
                             {order.qty > 0 && (
                               <span className="font-mono tabular-nums"> · {order.qty} pcs</span>
                             )}
+                            {order.deadline && (
+                              <div className="text-[11px] text-slate-500 mt-0.5">
+                                Deadline: {order.deadline}
+                              </div>
+                            )}
                           </div>
                           {onUpdateStatus ? (
-                            <div className="inline-flex items-center gap-1.5">
+                            <div className="inline-flex items-center gap-1.5 shrink-0">
                               {isUpdatingStatus ? (
                                 <Loader2 className="w-3.5 h-3.5 text-emerald-700 animate-spin" />
                               ) : (
@@ -977,7 +983,7 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                                 disabled={isUpdatingStatus}
                                 onChange={(e) => onUpdateStatus(order, e.target.value)}
                                 aria-label={`Ubah status ${order.namaKlien}`}
-                                className={`min-h-[36px] px-2.5 py-1 text-xs font-bold rounded-lg border ${statusTone.bgClass} ${statusTone.borderClass} ${statusTone.textClass}`}
+                                className={`min-h-[42px] px-3 py-1.5 text-xs font-bold rounded-xl border ${statusTone.bgClass} ${statusTone.borderClass} ${statusTone.textClass}`}
                               >
                                 {rowStatusOptions.map((st) => (
                                   <option key={st} value={st} className="text-slate-900 bg-white">
@@ -999,12 +1005,28 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                           )}
                         </div>
 
+                        {isExpanded && (
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs text-slate-600">
+                            <div className="grid grid-cols-2 gap-2 font-mono tabular-nums">
+                              <div>Bayar: {formatRupiah(order.bayar)}</div>
+                              <div>Metode: {order.metodeBayar || '—'}</div>
+                              <div>Acara: {order.jenisAcara || '—'}</div>
+                              <div>Baris: #{order.rowNumber1Based}</div>
+                            </div>
+                            {order.catatan && (
+                              <div className="pt-1.5 border-t border-slate-200/70 text-slate-700">
+                                <strong>Catatan:</strong> {order.catatan}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         <div className="pt-1 flex flex-wrap items-center gap-2">
                           {order.invoiceNo && (
                             <button
                               type="button"
                               onClick={() => onOpenInvoice(order.invoiceNo)}
-                              className="flex-1 min-h-[42px] inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-xl cursor-pointer"
+                              className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-xl cursor-pointer"
                             >
                               <FileDown className="w-4 h-4" />
                               <span>PDF Invoice</span>
@@ -1014,18 +1036,32 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                             <button
                               type="button"
                               onClick={() => onQuickMarkPaidAndDone(order)}
-                              className="min-h-[42px] inline-flex items-center justify-center gap-1 px-3 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl cursor-pointer"
+                              className="min-h-[44px] inline-flex items-center justify-center gap-1 px-3 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl cursor-pointer"
                             >
                               <CheckCircle2 className="w-4 h-4" />
                               <span>Lunasi</span>
                             </button>
                           )}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedRowNum(isExpanded ? null : order.rowNumber1Based)
+                            }
+                            aria-label="Detail order"
+                            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-slate-600 bg-slate-100 rounded-xl cursor-pointer"
+                          >
+                            {isExpanded ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4" />
+                            )}
+                          </button>
                           {phone.waUrl && (
                             <a
                               href={phone.waUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="min-h-[42px] min-w-[42px] inline-flex items-center justify-center text-emerald-700 bg-slate-100 rounded-xl"
+                              className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl"
                               title="Chat WhatsApp"
                             >
                               <MessageCircle className="w-4 h-4" />
@@ -1034,7 +1070,7 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                           <button
                             type="button"
                             onClick={() => onEditRow(order.rowNumber1Based, order.rawValues)}
-                            className="min-h-[42px] min-w-[42px] inline-flex items-center justify-center text-slate-600 bg-slate-100 rounded-xl cursor-pointer"
+                            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-slate-600 bg-slate-100 rounded-xl cursor-pointer"
                             title="Edit order"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -1042,7 +1078,7 @@ export const TrackerClosingView: React.FC<TrackerClosingViewProps> = ({
                           <button
                             type="button"
                             onClick={() => onDeleteRow(order.rowNumber1Based, order.rawValues)}
-                            className="min-h-[42px] min-w-[42px] inline-flex items-center justify-center text-rose-600 bg-rose-50 rounded-xl cursor-pointer"
+                            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-rose-600 bg-rose-50 rounded-xl cursor-pointer"
                             title="Hapus order"
                           >
                             <Trash2 className="w-4 h-4" />

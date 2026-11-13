@@ -56,18 +56,18 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
           type="button"
           onClick={handleInstallClick}
           title="Install aplikasi Serasa Salam ke Desktop atau Handphone"
-          className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-[#114232] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/90 rounded-full transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          className="min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-bold text-[#114232] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/90 rounded-xl lg:rounded-full transition-colors whitespace-nowrap shrink-0 cursor-pointer"
         >
-          <Download className="w-3.5 h-3.5" />
+          <Download className="w-4 h-4 lg:w-3.5 lg:h-3.5" />
           <span className="hidden md:inline">Install Aplikasi</span>
         </button>
       )}
 
       {/* Install Instructions Modal (iOS Safari + Desktop/Android Fallback) */}
       {showGuideModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 bg-[#114232] text-white flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl border border-slate-200 shadow-2xl overflow-hidden max-h-[90dvh] flex flex-col">
+            <div className="px-5 sm:px-6 py-4 bg-[#114232] text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
                 <Smartphone className="w-5 h-5 text-emerald-300" />
                 <div>
@@ -75,20 +75,21 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
                     Install Aplikasi Serasa Salam
                   </h3>
                   <p className="text-[11px] text-emerald-100/80">
-                    Bisa dipasang di Windows, Mac, Android, & iPhone
+                    Bisa dipasang di Windows, Mac, Android, &amp; iPhone
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowGuideModal(false)}
-                className="p-1.5 text-emerald-100 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-emerald-100 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                aria-label="Tutup panduan install"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-6 space-y-4 text-xs text-slate-700">
+            <div className="p-5 sm:p-6 pb-safe space-y-4 text-xs text-slate-700 overflow-y-auto">
               {isIOS ? (
                 <div className="space-y-3">
                   <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 font-semibold">
@@ -152,7 +153,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowGuideModal(false)}
-                  className="px-5 py-2 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-full transition-colors cursor-pointer"
+                  className="w-full sm:w-auto min-h-[46px] px-5 py-2.5 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-xl sm:rounded-full transition-colors cursor-pointer"
                 >
                   Mengerti
                 </button>

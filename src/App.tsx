@@ -127,6 +127,7 @@ export default function App() {
   // Navigation & Modal States
   const [activeNav, setActiveNav] = useState<NavSection>('dashboard');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState<boolean>(false);
   const [selectedInvoiceNo, setSelectedInvoiceNo] = useState<string>('');
 
   // Global search state synced across views
@@ -606,24 +607,44 @@ export default function App() {
 
   const activeSpreadsheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
 
+  const mobilePageTitleMap: Record<NavSection, string> = {
+    dashboard: 'Serasa Salam',
+    pos: 'Input Penjualan',
+    closing: 'Tracker Closing',
+    invoice: 'PDF Invoice',
+    piutang: 'Belum Lunas (DP)',
+    reminders: 'Follow Up WA',
+    calculator: 'Kalkulator Harga',
+    connect: 'Koneksi Sheet',
+  };
+
   return (
-    <div className="h-screen overflow-hidden flex bg-[#F4F7F5] text-slate-900 print:h-auto print:overflow-visible">
+    <div className="h-[100dvh] overflow-hidden flex bg-[#F4F7F5] text-slate-900 print:h-auto print:overflow-visible">
+      {/* Mobile Drawer Backdrop */}
+      {isMobileSidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-slate-900/45 backdrop-blur-[1px] lg:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Left Sidebar (Desktop Fixed Stationary + Mobile Drawer) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-[264px] h-screen shrink-0 bg-white border-r border-slate-200/80 flex flex-col justify-between transition-transform duration-200 lg:static lg:translate-x-0 print:hidden ${
-          isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 left-0 z-40 w-[280px] sm:w-[264px] h-[100dvh] shrink-0 bg-white border-r border-slate-200/80 flex flex-col justify-between transition-transform duration-200 lg:static lg:translate-x-0 print:hidden ${
+          isMobileSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
       >
         {/* Top Brand + Nav List */}
         <div className="flex-1 overflow-y-auto">
-          <div className="h-16 px-6 flex items-center justify-between border-b border-slate-100">
+          <div className="h-16 px-5 sm:px-6 flex items-center justify-between border-b border-slate-100">
             <button
               type="button"
               onClick={() => {
                 setActiveNav('dashboard');
                 setIsMobileSidebarOpen(false);
               }}
-              className="flex items-center cursor-pointer"
+              className="flex items-center cursor-pointer min-h-[44px]"
             >
               <img
                 src={SERASA_SALAM_LOGO_DATA_URL}
@@ -634,7 +655,8 @@ export default function App() {
             <button
               type="button"
               onClick={() => setIsMobileSidebarOpen(false)}
-              className="lg:hidden p-1.5 text-slate-400 hover:text-slate-700 rounded-lg"
+              className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-500 hover:text-slate-800 rounded-xl"
+              aria-label="Tutup menu"
             >
               <X className="w-5 h-5" />
             </button>
@@ -734,80 +756,140 @@ export default function App() {
         </div>
       </aside>
 
-      {/* Main Content Area (Stationary Header + Independently Scrollable Viewport) */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden min-w-0 print:h-auto print:overflow-visible">
-        {/* Stationary Top Bar: Never scrolls with content */}
-        <header className="shrink-0 z-30 h-16 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between gap-4 print:hidden">
-          {/* Left: Mobile drawer button */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <span className="lg:hidden text-sm font-extrabold text-slate-900">
-              Serasa Salam
-            </span>
-          </div>
-
-          {/* Center: Global Search Input */}
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={globalSearch}
-                onChange={(e) => {
-                  setGlobalSearch(e.target.value);
-                  if (activeNav === 'dashboard' && e.target.value.trim()) {
-                    setActiveNav('closing');
-                  }
-                }}
-                placeholder="Cari nomor invoice, nama pemesan, paket undangan..."
-                className="w-full pl-10 pr-12 py-2 text-xs bg-slate-100/80 border border-slate-200/80 rounded-full text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-emerald-700"
-              />
-              <span className="hidden sm:inline-block text-[10px] font-mono text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200 absolute right-3 top-1/2 -translate-y-1/2">
-                ⌘K
+      {/* Main Content Area (Stationary Header + Independently Scrollable Viewport + Mobile Bottom Nav) */}
+      <div className="flex-1 flex flex-col h-[100dvh] overflow-hidden min-w-0 print:h-auto print:overflow-visible">
+        {/* Stationary Top Bar: Clean on Mobile, Rich on Desktop */}
+        <header className="shrink-0 z-30 bg-white border-b border-slate-200/80 print:hidden">
+          <div className="h-14 lg:h-16 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2.5 sm:gap-4">
+            {/* Left: Mobile drawer button + Active Page Title */}
+            <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 lg:hidden">
+              <button
+                type="button"
+                onClick={() => setIsMobileSidebarOpen(true)}
+                aria-label="Buka menu navigasi"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-700 hover:bg-slate-100 rounded-xl shrink-0 cursor-pointer"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <span className="text-sm font-extrabold text-slate-900 truncate">
+                {mobilePageTitleMap[activeNav]}
               </span>
+            </div>
+
+            {/* Center: Desktop Global Search Input */}
+            <div className="hidden lg:block flex-1 max-w-md">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={globalSearch}
+                  onChange={(e) => {
+                    setGlobalSearch(e.target.value);
+                    if (activeNav === 'dashboard' && e.target.value.trim()) {
+                      setActiveNav('closing');
+                    }
+                  }}
+                  placeholder="Cari nomor invoice, nama pemesan, paket undangan..."
+                  className="w-full pl-10 pr-12 py-2 text-xs bg-slate-100/80 border border-slate-200/80 rounded-full text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-emerald-700"
+                />
+                <span className="hidden sm:inline-block text-[10px] font-mono text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200 absolute right-3 top-1/2 -translate-y-1/2">
+                  ⌘K
+                </span>
+              </div>
+            </div>
+
+            {/* Right: Mobile Search/Sync + Desktop Actions */}
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsMobileSearchOpen((v) => !v)}
+                aria-label="Cari pesanan"
+                className={`lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-colors cursor-pointer ${
+                  isMobileSearchOpen || globalSearch
+                    ? 'bg-emerald-50 text-[#114232]'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <Search className="w-5 h-5" />
+              </button>
+
+              <PWAInstallButton variant="header" />
+
+              <button
+                type="button"
+                onClick={() => loadAllSerasaData(savedScriptUrl, spreadsheetId)}
+                disabled={isLoadingBundle}
+                title="Sinkronkan ulang dengan Google Spreadsheet"
+                aria-label="Sinkronkan ulang data"
+                className="min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 lg:p-2 flex items-center justify-center text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl lg:rounded-full transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 ${isLoadingBundle ? 'animate-spin text-emerald-700' : ''}`}
+                />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveNav('invoice')}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <FileDown className="w-3.5 h-3.5 text-[#114232]" />
+                <span>Unduh PDF Invoice</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveNav('pos')}
+                className="hidden lg:inline-flex items-center gap-1.5 px-4 py-2 text-xs font-extrabold text-white bg-[#114232] hover:bg-[#0c3124] rounded-full shadow-xs transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Input Penjualan</span>
+              </button>
             </div>
           </div>
 
-          {/* Right: Install PWA + Sync Button + Primary "+ Input Penjualan" Button + PDF Invoice Button */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <PWAInstallButton variant="header" />
-
-            <button
-              type="button"
-              onClick={() => loadAllSerasaData(savedScriptUrl, spreadsheetId)}
-              disabled={isLoadingBundle}
-              title="Sinkronkan ulang dengan Google Spreadsheet"
-              className="p-2 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw
-                className={`w-4 h-4 ${isLoadingBundle ? 'animate-spin text-emerald-700' : ''}`}
-              />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveNav('invoice')}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              <FileDown className="w-3.5 h-3.5 text-[#114232]" />
-              <span>Unduh PDF Invoice</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveNav('pos')}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-extrabold text-white bg-[#114232] hover:bg-[#0c3124] rounded-full shadow-xs transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Input Penjualan</span>
-            </button>
-          </div>
+          {/* Expandable Full-Width Mobile Search Bar */}
+          {(isMobileSearchOpen || globalSearch.trim().length > 0) && (
+            <div className="lg:hidden px-3 pb-3 pt-1 border-t border-slate-100 bg-white">
+              <div className="relative flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={globalSearch}
+                    onChange={(e) => {
+                      setGlobalSearch(e.target.value);
+                      if (activeNav === 'dashboard' && e.target.value.trim()) {
+                        setActiveNav('closing');
+                      }
+                    }}
+                    placeholder="Cari nama klien, no. invoice, paket..."
+                    className="w-full min-h-[44px] pl-10 pr-10 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#114232]"
+                  />
+                  {globalSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setGlobalSearch('')}
+                      aria-label="Hapus pencarian"
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 min-w-[36px] min-h-[36px] flex items-center justify-center text-slate-400 hover:text-slate-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGlobalSearch('');
+                    setIsMobileSearchOpen(false);
+                  }}
+                  className="min-h-[44px] px-3 text-xs font-semibold text-slate-600 bg-slate-100 rounded-xl shrink-0"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          )}
         </header>
 
         {/* Independently Scrollable Viewport Body */}
@@ -816,7 +898,7 @@ export default function App() {
             activeNav === 'invoice' ? 'lg:overflow-hidden' : ''
           }`}
         >
-          <div className="max-w-[1380px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+          <div className="max-w-[1380px] w-full mx-auto px-3.5 pt-4 pb-24 sm:p-6 sm:pb-24 lg:p-8 lg:pb-8 space-y-5 sm:space-y-6">
           {/* Status & Error Banners */}
           {statusBanner && (
             <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-900">
@@ -1047,9 +1129,9 @@ export default function App() {
 
               {/* 6. KONEKSI GOOGLE SHEET (Spreadsheet Link + 2-Way Apps Script Bridge Setup) */}
               {activeNav === 'connect' && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                  <div className="lg:col-span-7 space-y-6">
-                    <div className="bg-white border border-slate-200/90 rounded-3xl p-6 space-y-5 shadow-2xs">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
+                  <div className="lg:col-span-7 space-y-5 sm:space-y-6">
+                    <div className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-5 shadow-2xs">
                       <div>
                         <div className="text-xs font-extrabold text-emerald-700 mb-1">
                           Koneksi Langsung ke Tab &ldquo;Tracker Closing&rdquo;
@@ -1096,11 +1178,11 @@ export default function App() {
                             Link Google Spreadsheet (Memiliki Tab <code>Tracker Closing</code>)
                           </label>
                           <input
-                            type="text"
+                            type="url"
                             value={sheetUrlInput}
                             onChange={(e) => setSheetUrlInput(e.target.value)}
                             placeholder="https://docs.google.com/spreadsheets/d/1YYMnbbVAfEPGcDlizW93LdqqS6wcalnKn_tJJeLd-nI/edit"
-                            className="w-full px-4 py-2.5 text-xs font-mono bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-700"
+                            className="w-full min-h-[46px] px-4 py-2.5 text-xs font-mono bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-700"
                           />
                         </div>
 
@@ -1110,18 +1192,18 @@ export default function App() {
                             Simpan Otomatis Tanpa Blokir 403)
                           </label>
                           <input
-                            type="text"
+                            type="url"
                             value={scriptUrlInput}
                             onChange={(e) => setScriptUrlInput(e.target.value)}
                             placeholder="https://script.google.com/macros/s/AKfycb.../exec"
-                            className="w-full px-4 py-2.5 text-xs font-mono bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-700"
+                            className="w-full min-h-[46px] px-4 py-2.5 text-xs font-mono bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-700"
                           />
                         </div>
 
                         <div className="flex items-center justify-end gap-3">
                           <button
                             type="submit"
-                            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-full transition-colors cursor-pointer"
+                            className="w-full sm:w-auto min-h-[46px] inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-full transition-colors cursor-pointer"
                           >
                             <CheckCircle2 className="w-4 h-4" />
                             <span>Simpan & Hubungkan Spreadsheet</span>
@@ -1130,8 +1212,8 @@ export default function App() {
                       </form>
                     </div>
 
-                    <div className="bg-white border border-slate-200/90 rounded-3xl p-6 space-y-4 shadow-2xs">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 shadow-2xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5">
                           <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 text-[#114232] flex items-center justify-center shrink-0">
                             <Code2 className="w-4 h-4" />
@@ -1149,7 +1231,7 @@ export default function App() {
                         <button
                           type="button"
                           onClick={handleCopyAppsScript}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-full transition-colors cursor-pointer"
+                          className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#114232] hover:bg-[#0c3124] rounded-full transition-colors cursor-pointer shrink-0"
                         >
                           {copiedScript ? (
                             <>
@@ -1353,6 +1435,101 @@ export default function App() {
           ) : null}
           </div>
         </main>
+
+        {/* Mobile Thumb-Zone Bottom Navigation Bar */}
+        <nav
+          aria-label="Navigasi utama handphone"
+          className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 pb-safe print:hidden"
+        >
+          <div className="grid grid-cols-5 items-center h-[58px] px-1">
+            <button
+              type="button"
+              onClick={() => setActiveNav('dashboard')}
+              className={`min-h-[48px] flex flex-col items-center justify-center gap-0.5 rounded-xl transition-colors cursor-pointer ${
+                activeNav === 'dashboard' ? 'text-[#114232]' : 'text-slate-500'
+              }`}
+            >
+              <LayoutDashboard className="w-5 h-5" />
+              <span className="text-[10px] font-bold tracking-tight whitespace-nowrap">
+                Dasbor
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveNav('closing')}
+              className={`min-h-[48px] flex flex-col items-center justify-center gap-0.5 rounded-xl transition-colors cursor-pointer ${
+                activeNav === 'closing' ? 'text-[#114232]' : 'text-slate-500'
+              }`}
+            >
+              <ShoppingBag className="w-5 h-5" />
+              <span className="text-[10px] font-bold tracking-tight whitespace-nowrap">
+                Closing
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveNav('pos')}
+              className="min-h-[48px] flex flex-col items-center justify-center cursor-pointer"
+            >
+              <span
+                className={`w-11 h-8 rounded-xl flex items-center justify-center transition-colors shadow-xs ${
+                  activeNav === 'pos'
+                    ? 'bg-[#0a2a1f] text-white ring-2 ring-emerald-300'
+                    : 'bg-[#114232] text-white'
+                }`}
+              >
+                <Plus className="w-5 h-5" />
+              </span>
+              <span
+                className={`text-[10px] font-extrabold tracking-tight mt-0.5 whitespace-nowrap ${
+                  activeNav === 'pos' ? 'text-[#114232]' : 'text-slate-700'
+                }`}
+              >
+                Input
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveNav('reminders')}
+              className={`relative min-h-[48px] flex flex-col items-center justify-center gap-0.5 rounded-xl transition-colors cursor-pointer ${
+                activeNav === 'reminders' ? 'text-[#114232]' : 'text-slate-500'
+              }`}
+            >
+              <div className="relative">
+                <BellRing className="w-5 h-5" />
+                {sidebarBadges.reminderCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-600 text-white text-[9px] font-extrabold flex items-center justify-center tabular-nums">
+                    {sidebarBadges.reminderCount > 99 ? '99+' : sidebarBadges.reminderCount}
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] font-bold tracking-tight whitespace-nowrap">
+                Follow Up
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className={`min-h-[48px] flex flex-col items-center justify-center gap-0.5 rounded-xl transition-colors cursor-pointer ${
+                activeNav === 'invoice' ||
+                activeNav === 'piutang' ||
+                activeNav === 'calculator' ||
+                activeNav === 'connect'
+                  ? 'text-[#114232]'
+                  : 'text-slate-500'
+              }`}
+            >
+              <Menu className="w-5 h-5" />
+              <span className="text-[10px] font-bold tracking-tight whitespace-nowrap">
+                Menu
+              </span>
+            </button>
+          </div>
+        </nav>
       </div>
 
       {/* Row Editor Modal */}

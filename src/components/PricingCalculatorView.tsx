@@ -46,9 +46,9 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left 7 Cols: Interactive Pricing Calculator */}
-        <div className="lg:col-span-7 bg-white border border-slate-200/90 rounded-3xl p-6 space-y-5 shadow-2xs">
+        <div className="lg:col-span-7 bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-5 shadow-2xs">
           <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100">
-            <div className="w-9 h-9 rounded-xl bg-[#114232] text-white flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[#114232] text-white flex items-center justify-center shrink-0">
               <Calculator className="w-4 h-4" />
             </div>
             <div>
@@ -84,7 +84,7 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
                           setDurasiHariKerja(9);
                         }
                       }}
-                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                      className={`min-h-[54px] p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                         active
                           ? 'bg-[#114232] text-white border-[#114232] shadow-xs'
                           : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
@@ -110,10 +110,11 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
               </label>
               <input
                 type="number"
+                inputMode="numeric"
                 min={1}
                 value={qty}
                 onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
-                className="w-full px-3.5 py-2.5 text-sm font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-700 tabular-nums"
+                className="w-full min-h-[46px] px-3.5 py-2.5 text-sm font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-700 tabular-nums"
               />
             </div>
 
@@ -123,10 +124,11 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
               </label>
               <input
                 type="number"
+                inputMode="numeric"
                 min={0}
                 value={hargaPcs}
                 onChange={(e) => setHargaPcs(Math.max(0, Number(e.target.value) || 0))}
-                className="w-full px-3.5 py-2.5 text-sm font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-700 tabular-nums"
+                className="w-full min-h-[46px] px-3.5 py-2.5 text-sm font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-700 tabular-nums"
               />
             </div>
 
@@ -136,10 +138,11 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
               </label>
               <input
                 type="number"
+                inputMode="numeric"
                 min={0}
                 value={diskon}
                 onChange={(e) => setDiskon(Math.max(0, Number(e.target.value) || 0))}
-                className="w-full px-3.5 py-2.5 text-sm font-mono bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-700 tabular-nums"
+                className="w-full min-h-[46px] px-3.5 py-2.5 text-sm font-mono bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-700 tabular-nums"
               />
             </div>
 
@@ -149,10 +152,11 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
               </label>
               <input
                 type="number"
+                inputMode="numeric"
                 min={0}
                 value={ongkir}
                 onChange={(e) => setOngkir(Math.max(0, Number(e.target.value) || 0))}
-                className="w-full px-3.5 py-2.5 text-sm font-mono bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-700 tabular-nums"
+                className="w-full min-h-[46px] px-3.5 py-2.5 text-sm font-mono bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-700 tabular-nums"
               />
             </div>
 
@@ -167,9 +171,9 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
                   max={21}
                   value={durasiHariKerja}
                   onChange={(e) => setDurasiHariKerja(Number(e.target.value))}
-                  className="flex-1 accent-[#114232]"
+                  className="flex-1 accent-[#114232] h-7"
                 />
-                <span className="px-3 py-1.5 rounded-xl bg-slate-100 font-mono text-xs font-bold text-slate-800">
+                <span className="px-3 py-1.5 rounded-xl bg-slate-100 font-mono text-xs font-bold text-slate-800 shrink-0">
                   {durasiHariKerja} Hari
                 </span>
               </div>
@@ -177,8 +181,8 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
           </div>
 
           {/* Calculated Result Box */}
-          <div className="p-5 rounded-2xl bg-[#114232] text-white space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#114232] text-white space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
               <div>
                 <div className="text-[11px] text-emerald-200">Subtotal</div>
                 <div className="text-lg font-extrabold font-mono tabular-nums mt-0.5">
@@ -199,9 +203,9 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
               </div>
             </div>
 
-            <div className="pt-3 border-t border-white/15 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="pt-3 border-t border-white/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2 text-emerald-100">
-                <Clock className="w-4 h-4 text-emerald-300" />
+                <Clock className="w-4 h-4 text-emerald-300 shrink-0" />
                 <span>
                   Target Deadline Selesai: <strong>{estimasiSelesai}</strong>
                 </span>
@@ -210,9 +214,9 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
               <button
                 type="button"
                 onClick={onOpenPosWithPreset}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-[#114232] font-extrabold text-xs hover:bg-emerald-50 transition-colors cursor-pointer"
+                className="w-full sm:w-auto min-h-[46px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-white text-[#114232] font-extrabold text-xs hover:bg-emerald-50 transition-colors cursor-pointer"
               >
-                <CheckCircle2 className="w-3.5 h-3.5" />
+                <CheckCircle2 className="w-4 h-4" />
                 <span>Buka Kasir POS & Buat Faktur</span>
               </button>
             </div>
@@ -220,7 +224,7 @@ export const PricingCalculatorView: React.FC<PricingCalculatorViewProps> = ({
         </div>
 
         {/* Right 5 Cols: Daftar Paket Harga Reference */}
-        <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-3xl p-6 space-y-4 shadow-2xs">
+        <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 shadow-2xs">
           <div className="flex items-center gap-2">
             <Tag className="w-4 h-4 text-[#114232]" />
             <h3 className="text-base font-extrabold text-slate-900">

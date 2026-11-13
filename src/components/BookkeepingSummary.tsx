@@ -147,8 +147,8 @@ export const BookkeepingSummary: React.FC<BookkeepingSummaryProps> = ({
   return (
     <div className="space-y-6">
       {/* KPI Totals Strip */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 mb-5 border-b border-slate-200">
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-slate-200">
           <div>
             <h2 className="text-base font-bold text-slate-900">
               Rekapitulasi Angka & Keuangan — Tab {sheetTitle}
@@ -167,11 +167,11 @@ export const BookkeepingSummary: React.FC<BookkeepingSummaryProps> = ({
             Tidak ditemukan kolom nominal/angka pada tab ini. Pastikan kolom nominal berisi angka.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
             {numericMetrics.map((m) => (
               <div
                 key={m.col.index}
-                className="p-4 rounded-lg border border-slate-200 bg-slate-50/60 flex flex-col justify-between"
+                className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 flex flex-col justify-between"
               >
                 <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
                   <span className="font-semibold text-slate-700 truncate">{m.col.name}</span>
@@ -194,7 +194,7 @@ export const BookkeepingSummary: React.FC<BookkeepingSummaryProps> = ({
 
       {/* Category & Status Breakdown Table */}
       {activeCategoryCol && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6">
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 mb-5 border-b border-slate-200">
             <div>
               <h3 className="text-base font-bold text-slate-900">
@@ -205,16 +205,18 @@ export const BookkeepingSummary: React.FC<BookkeepingSummaryProps> = ({
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Filter className="w-3.5 h-3.5 text-slate-400" />
-                <label className="text-xs font-medium text-slate-600 whitespace-nowrap">
-                  Kelompokkan:
-                </label>
+            <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-3 w-full md:w-auto">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
+                <div className="flex items-center gap-1.5">
+                  <Filter className="w-3.5 h-3.5 text-slate-400" />
+                  <label className="text-xs font-medium text-slate-600 whitespace-nowrap">
+                    Kelompokkan:
+                  </label>
+                </div>
                 <select
                   value={activeCategoryCol.index}
                   onChange={(e) => setSelectedCategoryColIdx(Number(e.target.value))}
-                  className="px-2.5 py-1.5 text-xs font-medium bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-emerald-600"
+                  className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-2 sm:py-1.5 text-xs font-medium bg-slate-50 border border-slate-300 rounded-xl sm:rounded-lg text-slate-800 focus:outline-none focus:border-emerald-600"
                 >
                   {categoryColumns.map((c) => (
                     <option key={c.index} value={c.index}>
@@ -225,15 +227,17 @@ export const BookkeepingSummary: React.FC<BookkeepingSummaryProps> = ({
               </div>
 
               {numericMetrics.length > 0 && activeMetric && (
-                <div className="flex items-center gap-2">
-                  <Calculator className="w-3.5 h-3.5 text-slate-400" />
-                  <label className="text-xs font-medium text-slate-600 whitespace-nowrap">
-                    Hitung Total:
-                  </label>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
+                  <div className="flex items-center gap-1.5">
+                    <Calculator className="w-3.5 h-3.5 text-slate-400" />
+                    <label className="text-xs font-medium text-slate-600 whitespace-nowrap">
+                      Hitung Total:
+                    </label>
+                  </div>
                   <select
                     value={activeMetric.col.index}
                     onChange={(e) => setSelectedMetricColIdx(Number(e.target.value))}
-                    className="px-2.5 py-1.5 text-xs font-medium bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-emerald-600"
+                    className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-2 sm:py-1.5 text-xs font-medium bg-slate-50 border border-slate-300 rounded-xl sm:rounded-lg text-slate-800 focus:outline-none focus:border-emerald-600"
                   >
                     {numericMetrics.map((m) => (
                       <option key={m.col.index} value={m.col.index}>
