@@ -1,0 +1,163 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net (Default-Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string &&
+        id.size() >= 1 &&
+        id.size() <= 128 &&
+        id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() &&
+        request.auth.token.email is string &&
+        request.auth.token.email_verified == true;
+    }
+
+    function emailToId(email) {
+      return email.lower().replace('[^a-z0-9_\\-]', '_');
+    }
+
+    function isOwnerAdmin() {
+      return isVerifiedUser() &&
+        request.auth.token.email.lower() == 'rinaldiharisma28@gmail.com';
+    }
+
+    function isAdmin() {
+      return isOwnerAdmin() || (
+        isVerifiedUser() &&
+        exists(/databases/$(database)/documents/allowed_accounts/$(emailToId(request.auth.token.email))) &&
+        get(/databases/$(database)/documents/allowed_accounts/$(emailToId(request.auth.token.email))).data.role == 'admin' &&
+        get(/databases/$(database)/documents/allowed_accounts/$(emailToId(request.auth.token.email))).data.active == true
+      );
+    }
+
+    function isAuthorizedStaff() {
+      return isOwnerAdmin() || (
+        isVerifiedUser() &&
+        exists(/databases/$(database)/documents/allowed_accounts/$(emailToId(request.auth.token.email))) &&
+        get(/databases/$(database)/documents/allowed_accounts/$(emailToId(request.auth.token.email))).data.active == true
+      );
+    }
+
+    function isValidAllowedAccount(data) {
+      return data.keys().hasAll(['email', 'displayName', 'role', 'active', 'addedByUid', 'addedByEmail', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['email', 'displayName', 'role', 'active', 'notes', 'addedByUid', 'addedByEmail', 'createdAt', 'updatedAt']) &&
+        data.email is string &&
+        data.email.size() >= 5 &&
+        data.email.size() <= 120 &&
+        data.email.matches('^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,}$') &&
+        data.displayName is string &&
+        data.displayName.size() >= 1 &&
+        data.displayName.size() <= 80 &&
+        data.role in ['admin', 'staff'] &&
+        data.active is bool &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 200)) &&
+        data.addedByUid is string &&
+        data.addedByUid.size() >= 1 &&
+        data.addedByUid.size() <= 128 &&
+        data.addedByEmail is string &&
+        data.addedByEmail.size() >= 5 &&
+        data.addedByEmail.size() <= 120 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidWorkspaceSettings(data) {
+      return data.keys().hasAll(['spreadsheetId', 'updatedByUid', 'updatedByEmail', 'updatedAt']) &&
+        data.keys().hasOnly(['spreadsheetId', 'scriptUrl', 'updatedByUid', 'updatedByEmail', 'updatedAt']) &&
+        data.spreadsheetId is string &&
+        data.spreadsheetId.size() >= 10 &&
+        data.spreadsheetId.size() <= 128 &&
+        (!('scriptUrl' in data) || (data.scriptUrl is string && data.scriptUrl.size() <= 300)) &&
+        data.updatedByUid is string &&
+        data.updatedByUid.size() >= 1 &&
+        data.updatedByUid.size() <= 128 &&
+        data.updatedByEmail is string &&
+        data.updatedByEmail.size() >= 5 &&
+        data.updatedByEmail.size() <= 120 &&
+        data.updatedAt is timestamp;
+    }
+
+    match /allowed_accounts/{accountId} {
+      allow get: if isValidId(accountId) && (
+        isAdmin() ||
+        (
+          isVerifiedUser() &&
+          accountId == emailToId(request.auth.token.email) &&
+          (resource == null || existing().email == request.auth.token.email.lower())
+        )
+      );
+
+      allow list: if isAdmin();
+
+      allow create: if isAdmin() &&
+        isValidId(accountId) &&
+        isValidAllowedAccount(incoming()) &&
+        accountId == emailToId(incoming().email) &&
+        incoming().addedByUid == request.auth.uid &&
+        incoming().addedByEmail == request.auth.token.email.lower() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isAdmin() &&
+        isValidId(accountId) &&
+        isValidAllowedAccount(incoming()) &&
+        incoming().email == existing().email &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().addedByUid == existing().addedByUid &&
+        incoming().addedByEmail == existing().addedByEmail &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'role', 'active', 'notes', 'updatedAt']) &&
+        (
+          existing().email != 'rinaldiharisma28@gmail.com' ||
+          (incoming().role == 'admin' && incoming().active == true)
+        );
+
+      allow delete: if isAdmin() &&
+        isValidId(accountId) &&
+        existing().email != 'rinaldiharisma28@gmail.com';
+    }
+
+    match /app_settings/{settingId} {
+      allow get: if isValidId(settingId) && isAuthorizedStaff();
+      allow list: if false;
+
+      allow create: if isAdmin() &&
+        isValidId(settingId) &&
+        settingId == 'workspace' &&
+        isValidWorkspaceSettings(incoming()) &&
+        incoming().updatedByUid == request.auth.uid &&
+        incoming().updatedByEmail == request.auth.token.email.lower() &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isAdmin() &&
+        isValidId(settingId) &&
+        settingId == 'workspace' &&
+        isValidWorkspaceSettings(incoming()) &&
+        incoming().updatedByUid == request.auth.uid &&
+        incoming().updatedByEmail == request.auth.token.email.lower() &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['spreadsheetId', 'scriptUrl', 'updatedByUid', 'updatedByEmail', 'updatedAt']);
+
+      allow delete: if false;
+    }
+  }
+}

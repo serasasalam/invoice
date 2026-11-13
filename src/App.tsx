@@ -6,9 +6,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { User } from 'firebase/auth';
 import {
+  AllowedAccountDoc,
+  fetchWorkspaceSettings,
   googleSignIn,
   initAuth,
   logout,
+  saveWorkspaceSettings,
+  signInWithGoogleGate,
+  verifyUserAuthorization,
 } from './services/auth';
 import {
   APPS_SCRIPT_BRIDGE_CODE,
@@ -37,6 +42,8 @@ import {
   CustomerRemindersView,
   groupOrdersByInvoice,
 } from './components/CustomerRemindersView';
+import { AuthPhase, LoginGateScreen } from './components/LoginGateScreen';
+import { AdminAccessPanel } from './components/AdminAccessPanel';
 import { PWAInstallButton } from './components/PWAInstallButton';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { SERASA_SALAM_LOGO_DATA_URL } from './assets/serasaLogoDataUrl';
@@ -60,6 +67,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  ShieldCheck,
   ShoppingBag,
   Users,
   X,
@@ -73,6 +81,7 @@ type NavSection =
   | 'piutang'
   | 'reminders'
   | 'calculator'
+  | 'access'
   | 'connect';
 
 const SCRIPT_URL_STORAGE_KEY = 'serasa_salam_gas_url_v1';
@@ -80,6 +89,10 @@ const SHEET_ID_STORAGE_KEY = 'serasa_salam_sheet_id_v1';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [authPhase, setAuthPhase] = useState<AuthPhase>('checking');
+  const [authorizedAccount, setAuthorizedAccount] = useState<AllowedAccountDoc | null>(null);
+  const [deniedReason, setDeniedReason] = useState<string | null>(null);
+  const [hasSheetsOAuth, setHasSheetsOAuth] = useState<boolean>(false);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -149,13 +162,97 @@ export default function App() {
   const [isMutating, setIsMutating] = useState<boolean>(false);
   const [updatingRowNumbers, setUpdatingRowNumbers] = useState<number[]>([]);
 
-  // Initialize Firebase Auth listener silently in background
+  // Verify Google Auth & Admin allowlist before loading any business data
   useEffect(() => {
-    const unsubscribe = initAuth(
-      (loggedInUser) => setUser(loggedInUser),
-      () => setUser(null)
-    );
-    return () => unsubscribe();
+    let cancelled = false;
+    const unsubscribe = initAuth(async (loggedInUser) => {
+      if (cancelled) return;
+
+      if (!loggedInUser) {
+        setUser(null);
+        setAuthorizedAccount(null);
+        setDeniedReason(null);
+        setHasSheetsOAuth(false);
+        setBundle(null);
+        setIsLoadingBundle(false);
+        setAuthPhase('unauthenticated');
+        return;
+      }
+
+      setUser(loggedInUser);
+      setAuthPhase('checking');
+      setAuthError(null);
+
+      try {
+        const verification = await verifyUserAuthorization(loggedInUser);
+        if (cancelled) return;
+
+        if (!verification.authorized) {
+          setAuthorizedAccount(null);
+          setDeniedReason(verification.reason);
+          setBundle(null);
+          setIsLoadingBundle(false);
+          setAuthPhase('denied');
+          return;
+        }
+
+        setAuthorizedAccount(verification.account);
+        setDeniedReason(null);
+        setAuthPhase('authorized');
+
+        // Sync shared Spreadsheet & Apps Script settings if configured in Firestore
+        let nextSheetId = spreadsheetId;
+        let nextScriptUrl = savedScriptUrl;
+        try {
+          const remoteSettings = await fetchWorkspaceSettings();
+          if (!cancelled && remoteSettings) {
+            if (remoteSettings.spreadsheetId) {
+              nextSheetId = remoteSettings.spreadsheetId;
+              setSpreadsheetId(remoteSettings.spreadsheetId);
+              setSheetUrlInput(
+                `https://docs.google.com/spreadsheets/d/${remoteSettings.spreadsheetId}/edit`
+              );
+              try {
+                localStorage.setItem(SHEET_ID_STORAGE_KEY, remoteSettings.spreadsheetId);
+              } catch {
+                // ignore
+              }
+            }
+            if (remoteSettings.scriptUrl) {
+              nextScriptUrl = remoteSettings.scriptUrl;
+              setSavedScriptUrl(remoteSettings.scriptUrl);
+              setScriptUrlInput(remoteSettings.scriptUrl);
+              try {
+                localStorage.setItem(SCRIPT_URL_STORAGE_KEY, remoteSettings.scriptUrl);
+              } catch {
+                // ignore
+              }
+            }
+          }
+        } catch {
+          // ignore remote settings error and fall back to local settings
+        }
+
+        if (!cancelled) {
+          await loadAllSerasaData(nextScriptUrl, nextSheetId);
+        }
+      } catch (err: any) {
+        if (cancelled) return;
+        setAuthorizedAccount(null);
+        setBundle(null);
+        setIsLoadingBundle(false);
+        setDeniedReason(
+          err?.message || 'Gagal memverifikasi status akun Google Anda di server.'
+        );
+        setAuthPhase('denied');
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadAllSerasaData = useCallback(
@@ -184,11 +281,6 @@ export default function App() {
     },
     [savedScriptUrl, spreadsheetId, selectedInvoiceNo]
   );
-
-  useEffect(() => {
-    loadAllSerasaData(savedScriptUrl, spreadsheetId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Compute badges for sidebar (grouped 1 invoice = 1 customer reminder)
   const sidebarBadges = useMemo(() => {
@@ -252,7 +344,7 @@ export default function App() {
         } catch (err: any) {
           setApiError(err?.message || 'Gagal menyimpan penjualan ke Google Sheets.');
           setPendingMutation(null);
-          if (!savedScriptUrl && !user) {
+          if (!savedScriptUrl && !hasSheetsOAuth) {
             setActiveNav('connect');
           }
         } finally {
@@ -302,7 +394,7 @@ export default function App() {
         } catch (err: any) {
           setApiError(err?.message || 'Gagal memperbarui baris di Google Sheets.');
           setPendingMutation(null);
-          if (!savedScriptUrl && !user) {
+          if (!savedScriptUrl && !hasSheetsOAuth) {
             setActiveNav('connect');
           }
         } finally {
@@ -368,7 +460,7 @@ export default function App() {
         } catch (err: any) {
           setApiError(err?.message || 'Gagal memperbarui status pelunasan di Google Sheets.');
           setPendingMutation(null);
-          if (!savedScriptUrl && !user) {
+          if (!savedScriptUrl && !hasSheetsOAuth) {
             setActiveNav('connect');
           }
         } finally {
@@ -390,7 +482,7 @@ export default function App() {
     const items = Array.isArray(target) ? target : [target];
     if (items.length === 0) return;
 
-    if (!savedScriptUrl && !user) {
+    if (!savedScriptUrl && !hasSheetsOAuth) {
       setApiError(
         'Untuk langsung mengubah status pekerjaan ke Google Sheet, hubungkan URL Web App Apps Script terlebih dahulu di menu Koneksi Google Sheet.'
       );
@@ -448,7 +540,7 @@ export default function App() {
       await loadAllSerasaData(savedScriptUrl, spreadsheetId);
     } catch (err: any) {
       setApiError(err?.message || 'Gagal memperbarui status pekerjaan di Google Sheets.');
-      if (!savedScriptUrl && !user) {
+      if (!savedScriptUrl && !hasSheetsOAuth) {
         setActiveNav('connect');
       }
     } finally {
@@ -496,7 +588,7 @@ export default function App() {
         } catch (err: any) {
           setApiError(err?.message || 'Gagal menghapus baris dari Google Sheets.');
           setPendingMutation(null);
-          if (!savedScriptUrl && !user) {
+          if (!savedScriptUrl && !hasSheetsOAuth) {
             setActiveNav('connect');
           }
         } finally {
@@ -516,6 +608,29 @@ export default function App() {
     }
   };
 
+  const handleGateGoogleLogin = async () => {
+    setIsLoggingIn(true);
+    setAuthError(null);
+    try {
+      await signInWithGoogleGate();
+    } catch (err: any) {
+      const code = err?.code || '';
+      if (code === 'auth/popup-closed-by-user') {
+        setAuthError('Jendela login Google ditutup sebelum selesai.');
+      } else if (code === 'auth/unauthorized-domain') {
+        setAuthError(
+          'Login diblokir karena domain ini belum terdaftar (auth/unauthorized-domain) di Firebase Authentication.'
+        );
+      } else {
+        setAuthError(
+          err?.message || 'Gagal membuka jendela login Google. Pastikan pop-up browser diizinkan.'
+        );
+      }
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
   const handleLogin = async () => {
     setIsLoggingIn(true);
     setAuthError(null);
@@ -523,11 +638,12 @@ export default function App() {
       const result = await googleSignIn();
       if (result) {
         setUser(result.user);
-        setStatusBanner(`Berhasil masuk sebagai ${result.user.email}`);
+        setHasSheetsOAuth(true);
+        setStatusBanner(`Izin OAuth Spreadsheet aktif untuk ${result.user.email}`);
       }
     } catch {
       setAuthError(
-        'Muncul "Akses diblokir / Error 403"? Gunakan metode Jembatan Google Apps Script di sebelah kiri (Tanpa Login & Bebas Blokir 403) agar aplikasi langsung bisa menyimpan ke Sheet!'
+        'Muncul "Akses diblokir / Error 403"? Gunakan metode Jembatan Google Apps Script di sebelah kiri (Tanpa Login OAuth Sheet & Bebas Blokir 403) agar aplikasi langsung bisa menyimpan ke Sheet!'
       );
       setShowOAuthFixGuide(true);
     } finally {
@@ -538,6 +654,13 @@ export default function App() {
   const handleLogout = async () => {
     await logout();
     setUser(null);
+    setAuthorizedAccount(null);
+    setDeniedReason(null);
+    setHasSheetsOAuth(false);
+    setBundle(null);
+    setActiveNav('dashboard');
+    setIsMobileSidebarOpen(false);
+    setAuthPhase('unauthenticated');
   };
 
 
@@ -595,11 +718,20 @@ export default function App() {
       groupLabel: 'PENGATURAN & ALAT BANTU',
       items: [
         { id: 'calculator', label: 'Kalkulator Harga', icon: Calculator },
+        ...(authorizedAccount?.role === 'admin'
+          ? [
+              {
+                id: 'access' as NavSection,
+                label: 'Kelola Akun Login',
+                icon: ShieldCheck,
+              },
+            ]
+          : []),
         {
           id: 'connect',
           label: 'Koneksi Google Sheet',
           icon: Link2,
-          dot: Boolean(savedScriptUrl || user),
+          dot: Boolean(savedScriptUrl || hasSheetsOAuth),
         },
       ],
     },
@@ -615,8 +747,27 @@ export default function App() {
     piutang: 'Belum Lunas (DP)',
     reminders: 'Follow Up WA',
     calculator: 'Kalkulator Harga',
+    access: 'Kelola Akun Login',
     connect: 'Koneksi Sheet',
   };
+
+  // Block all system views behind Google Admin-Allowlist Login Gate until verified
+  if (authPhase !== 'authorized' || !user || !authorizedAccount) {
+    return (
+      <>
+        <LoginGateScreen
+          phase={authPhase}
+          isLoggingIn={isLoggingIn}
+          attemptedEmail={user?.email || null}
+          deniedReason={deniedReason}
+          loginError={authError}
+          onGoogleLogin={handleGateGoogleLogin}
+          onLogout={handleLogout}
+        />
+        <OfflineIndicator />
+      </>
+    );
+  }
 
   return (
     <div className="h-[100dvh] overflow-hidden flex bg-[#F4F7F5] text-slate-900 print:h-auto print:overflow-visible">
@@ -723,7 +874,7 @@ export default function App() {
               <span>Tracker Closing Sync</span>
             </div>
             <p className="text-[11px] text-emerald-100/80 leading-relaxed">
-              {savedScriptUrl || user
+              {savedScriptUrl || hasSheetsOAuth
                 ? 'Sinkronisasi 2-Arah Aktif. Input penjualan langsung tersimpan ke Sheet.'
                 : 'Mode Baca Aktif. Klik Koneksi Sheet untuk mengaktifkan simpan otomatis.'}
             </p>
@@ -738,20 +889,32 @@ export default function App() {
             </a>
           </div>
 
-          <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2.5">
+          <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-full bg-[#114232] text-white font-extrabold text-xs flex items-center justify-center shrink-0">
-                R
+                {(authorizedAccount.displayName || user.email || 'S')
+                  .charAt(0)
+                  .toUpperCase()}
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-extrabold text-slate-900 truncate">
-                  {user?.displayName || 'Rinaldy Harisma'}
+                  {authorizedAccount.displayName || user.displayName || user.email}
                 </div>
                 <div className="text-[10px] text-slate-500 truncate">
-                  Owner & Admin
+                  {authorizedAccount.role === 'admin' ? 'Admin Terdaftar' : 'Staf Terdaftar'} ·{' '}
+                  {user.email}
                 </div>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Keluar dari sistem"
+              aria-label="Keluar dari sistem"
+              className="min-w-[36px] min-h-[36px] px-2 py-1.5 rounded-xl bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-700 border border-slate-200 flex items-center justify-center gap-1 text-[11px] font-bold transition-colors cursor-pointer shrink-0"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </aside>
@@ -948,7 +1111,7 @@ export default function App() {
           )}
 
           {/* Prompt bar if 2-way write script URL is not configured yet */}
-          {!savedScriptUrl && !user && activeNav !== 'connect' && (
+          {!savedScriptUrl && !hasSheetsOAuth && activeNav !== 'connect' && (
             <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 rounded-2xl bg-amber-50/90 border border-amber-200 text-xs text-amber-950">
               <div className="flex items-center gap-2">
                 <Link2 className="w-4 h-4 text-amber-700 shrink-0" />
@@ -968,7 +1131,21 @@ export default function App() {
             </div>
           )}
 
-          {isLoadingBundle && !bundle ? (
+          {activeNav === 'calculator' && (
+            <PricingCalculatorView
+              onOpenPosWithPreset={() => setActiveNav('pos')}
+            />
+          )}
+
+          {activeNav === 'access' && authorizedAccount.role === 'admin' && (
+            <AdminAccessPanel currentUser={user} />
+          )}
+
+          {isLoadingBundle &&
+          !bundle &&
+          activeNav !== 'calculator' &&
+          activeNav !== 'access' &&
+          activeNav !== 'connect' ? (
             <div className="space-y-5">
               <div className="h-8 w-64 bg-slate-200 rounded-xl animate-pulse" />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -1119,15 +1296,10 @@ export default function App() {
                   updatingRowNumbers={updatingRowNumbers}
                 />
               )}
+            </>
+          ) : null}
 
-              {/* 7. KALKULATOR HARGA */}
-              {activeNav === 'calculator' && (
-                <PricingCalculatorView
-                  onOpenPosWithPreset={() => setActiveNav('pos')}
-                />
-              )}
-
-              {/* 6. KONEKSI GOOGLE SHEET (Spreadsheet Link + 2-Way Apps Script Bridge Setup) */}
+              {/* 9. KONEKSI GOOGLE SHEET (Spreadsheet Link + 2-Way Apps Script Bridge Setup) */}
               {activeNav === 'connect' && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
                   <div className="lg:col-span-7 space-y-5 sm:space-y-6">
@@ -1162,6 +1334,13 @@ export default function App() {
                             localStorage.setItem(SCRIPT_URL_STORAGE_KEY, cleanScript);
                           } catch {
                             // ignore
+                          }
+                          if (authorizedAccount.role === 'admin') {
+                            try {
+                              await saveWorkspaceSettings(user, extractedId, cleanScript);
+                            } catch {
+                              // keep local save working even if remote sync fails
+                            }
                           }
                           await loadAllSerasaData(cleanScript, extractedId);
                           setStatusBanner(
@@ -1299,18 +1478,20 @@ export default function App() {
                         </button>
                       </div>
 
-                      {user ? (
+                      {hasSheetsOAuth && user ? (
                         <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-slate-900 truncate">
                               {user.displayName || user.email}
                             </p>
-                            <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                            <p className="text-xs text-slate-500 truncate">
+                              Izin OAuth Google Sheets aktif · {user.email}
+                            </p>
                           </div>
                           <button
                             type="button"
                             onClick={handleLogout}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-rose-600 bg-white border border-slate-200 rounded-xl"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-rose-600 bg-white border border-slate-200 rounded-xl cursor-pointer"
                           >
                             <LogOut className="w-3 h-3" />
                             <span>Keluar</span>
@@ -1426,13 +1607,14 @@ export default function App() {
                         <li>
                           Untuk simpan 2-arah ke Sheet dari GitHub Pages, cukup tempel <strong>URL Web App Apps Script</strong> (<code>/exec</code>) di kolom sebelah kiri.
                         </li>
+                        <li>
+                          Agar Login Google berjalan di domain GitHub Pages (<code>serasasalam.github.io</code>), pastikan domain tersebut sudah ditambahkan di <strong>Firebase Console &rarr; Authentication &rarr; Settings &rarr; Authorized domains</strong>.
+                        </li>
                       </ol>
                     </div>
                   </div>
                 </div>
               )}
-            </>
-          ) : null}
           </div>
         </main>
 
@@ -1518,6 +1700,7 @@ export default function App() {
                 activeNav === 'invoice' ||
                 activeNav === 'piutang' ||
                 activeNav === 'calculator' ||
+                activeNav === 'access' ||
                 activeNav === 'connect'
                   ? 'text-[#114232]'
                   : 'text-slate-500'

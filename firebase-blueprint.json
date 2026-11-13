@@ -1,0 +1,128 @@
+{
+  "entities": {
+    "AllowedAccount": {
+      "title": "AllowedAccount",
+      "description": "Akun Google yang didaftarkan oleh Admin untuk dapat login dan mengakses sistem Serasa Salam.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 5,
+          "maxLength": 120,
+          "pattern": "^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,}$",
+          "description": "Alamat email Google lowercase yang diizinkan masuk ke sistem."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Nama lengkap atau panggilan pengguna / staf."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "staff"],
+          "description": "Peran pengguna di dalam sistem (admin dapat mengelola daftar akun; staff dapat mengakses pembukuan)."
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Status aktif akses login akun."
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Catatan opsional mengenai posisi atau keterangan staf."
+        },
+        "addedByUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Firebase Auth UID admin yang mendaftarkan akun."
+        },
+        "addedByEmail": {
+          "type": "string",
+          "format": "email",
+          "minLength": 5,
+          "maxLength": 120,
+          "description": "Email admin yang mendaftarkan akun."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp server saat akun didaftarkan."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp server saat data akun terakhir diperbarui."
+        }
+      },
+      "required": [
+        "email",
+        "displayName",
+        "role",
+        "active",
+        "addedByUid",
+        "addedByEmail",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WorkspaceSettings": {
+      "title": "WorkspaceSettings",
+      "description": "Pengaturan Spreadsheet & Web App Apps Script bersama untuk seluruh akun yang terdaftar.",
+      "type": "object",
+      "properties": {
+        "spreadsheetId": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 128,
+          "description": "ID Google Spreadsheet aktif (tab Tracker Closing)."
+        },
+        "scriptUrl": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "URL Web App Google Apps Script (/exec) untuk sinkronisasi 2-arah lintas perangkat."
+        },
+        "updatedByUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "UID admin yang terakhir memperbarui pengaturan."
+        },
+        "updatedByEmail": {
+          "type": "string",
+          "format": "email",
+          "minLength": 5,
+          "maxLength": 120,
+          "description": "Email admin yang terakhir memperbarui pengaturan."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp server saat pengaturan diperbarui."
+        }
+      },
+      "required": [
+        "spreadsheetId",
+        "updatedByUid",
+        "updatedByEmail",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/allowed_accounts/{accountId}": {
+      "schema": {
+        "$ref": "#/entities/AllowedAccount"
+      },
+      "description": "Daftar akun Google terdaftar yang diizinkan masuk ke aplikasi Serasa Salam."
+    },
+    "/app_settings/{settingId}": {
+      "schema": {
+        "$ref": "#/entities/WorkspaceSettings"
+      },
+      "description": "Konfigurasi workspace bersama (link Spreadsheet & Apps Script) untuk staf terdaftar."
+    }
+  }
+}
